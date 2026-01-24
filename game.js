@@ -30,8 +30,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 0.3,
-            currentPPS: 0.3
+            basePPS: 1,
+            currentPPS: 1
         },
         sydney: {
             name: 'Sydney',
@@ -40,8 +40,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 0.5,
-            currentPPS: 0.5
+            basePPS: 10,
+            currentPPS: 10
         },
         tiffany: {
             name: 'Tiffany',
@@ -50,8 +50,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 0.3,
-            currentPPS: 0.3
+            basePPS: 50,
+            currentPPS: 50
         },
         winslow: {
             name: 'Winslow',
@@ -60,8 +60,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 0.4,
-            currentPPS: 0.4
+            basePPS: 100,
+            currentPPS: 100
         }
     },
 
@@ -203,7 +203,7 @@ function recruitMember(memberKey) {
 
     showMessage(
         `${member.name} Joined!`,
-        `${member.name} is now reading with the club!<br><em>+${member.currentPPS} pages/second</em>`,
+        `${member.name} is now reading with the club!<br><em>+${formatNumber(member.currentPPS)} pages/second</em>`,
         'member'
     );
 
@@ -231,7 +231,7 @@ function renderMembers() {
             // Recruited
             rowClass += ' recruited';
             checkbox = '☑';
-            status = `<span class="member-pps">${member.currentPPS.toFixed(1)} p/s</span>`;
+            status = `<span class="member-pps">${formatNumber(member.currentPPS)} p/s</span>`;
         } else if (member.available) {
             // Available to recruit
             rowClass += ' available';
@@ -293,6 +293,9 @@ function completeBook() {
 
     // Add to completed list
     gameState.booksCompleted.push(book.number);
+
+    // Reward: +10 words per click for each book completed
+    gameState.wordsPerClick += 10;
 
     // Show completion message
     let messageType = 'normal';
@@ -376,8 +379,8 @@ function updateDisplay() {
     elements.booksCompleted.textContent = gameState.booksCompleted.length;
 
     // Update click stats
-    elements.wordsPerClick.textContent = gameState.wordsPerClick;
-    elements.pagesPerSecond.textContent = calculatePagesPerSecond().toFixed(1);
+    elements.wordsPerClick.textContent = formatNumber(gameState.wordsPerClick);
+    elements.pagesPerSecond.textContent = formatNumber(calculatePagesPerSecond());
 
     // Update book progress
     const progress = Math.min((gameState.currentBookPages / currentBook.pages_required) * 100, 100);
