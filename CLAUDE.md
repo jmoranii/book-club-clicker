@@ -51,7 +51,7 @@ An incremental clicker game celebrating a 10-year book club's journey through 16
 - [x] Phase 2: Book Progression (load books.json, book completion)
 - [x] Phase 3: Members & Passive Generation
 - [x] Phase 4: Upgrades System
-- [ ] Phase 5: Save System
+- [x] Phase 5: Save System
 - [ ] Phase 6: Stage 2 Transition
 - [ ] Phase 7: Special Events & Full Book Data
 - [ ] Phase 8: Polish & Deploy

@@ -2,6 +2,12 @@
 
 // Constants
 const WORDS_PER_PAGE = 250;
+const SAVE_KEY = 'bookClubClickerSave';
+const SAVE_VERSION = 1;
+const AUTO_SAVE_INTERVAL = 10000; // 10 seconds
+
+// Game pause state (for when tab is hidden)
+let isGamePaused = false;
 
 // Books data (loaded from JSON)
 let booksData = [];
@@ -244,6 +250,7 @@ function recruitMember(memberKey) {
 
     renderMembers();
     updateDisplay();
+    saveGame();
 
     return true;
 }
@@ -339,6 +346,7 @@ function purchaseUpgrade(upgradeKey) {
 
     renderUpgrades();
     updateDisplay();
+    saveGame();
     return true;
 }
 
@@ -440,6 +448,7 @@ function completeBook() {
     }
 
     updateDisplay();
+    saveGame();
 }
 
 // Handle special book effects
@@ -537,9 +546,138 @@ function formatNumber(num) {
     return (num / 1000000000).toFixed(1) + 'B';
 }
 
+// Save game to localStorage
+function saveGame() {
+    try {
+        const saveData = {
+            version: SAVE_VERSION,
+            savedAt: Date.now(),
+            gameState: {
+                totalWords: gameState.totalWords,
+                totalPages: gameState.totalPages,
+                currentBookIndex: gameState.currentBookIndex,
+                currentBookPages: gameState.currentBookPages,
+                booksCompleted: gameState.booksCompleted,
+                wordsPerClick: gameState.wordsPerClick,
+                stage: gameState.stage,
+                members: {},
+                upgrades: {},
+                passivePagesPerSecond: gameState.passivePagesPerSecond,
+                currentBookMultiplier: gameState.currentBookMultiplier,
+                discussionPoints: gameState.discussionPoints,
+                discussionPointsPerClick: gameState.discussionPointsPerClick,
+                careerExpertRuleUnlocked: gameState.careerExpertRuleUnlocked,
+                greenlightUnlocked: gameState.greenlightUnlocked,
+                globalMultiplier: gameState.globalMultiplier,
+                gameStartTime: gameState.gameStartTime,
+                totalPlayTime: gameState.totalPlayTime
+            }
+        };
+
+        // Save member states (only dynamic properties)
+        for (const [key, member] of Object.entries(gameState.members)) {
+            saveData.gameState.members[key] = {
+                available: member.available,
+                unlocked: member.unlocked,
+                level: member.level,
+                currentPPS: member.currentPPS
+            };
+        }
+
+        // Save upgrade states (only dynamic properties)
+        for (const [key, upgrade] of Object.entries(gameState.upgrades)) {
+            saveData.gameState.upgrades[key] = {
+                level: upgrade.level
+            };
+        }
+
+        localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+        gameState.lastSaveTime = Date.now();
+        console.log('Game saved');
+        return true;
+    } catch (error) {
+        console.error('Failed to save game:', error);
+        return false;
+    }
+}
+
+// Load game from localStorage
+function loadGame() {
+    try {
+        const saveString = localStorage.getItem(SAVE_KEY);
+        if (!saveString) {
+            console.log('No save found, starting fresh');
+            return false;
+        }
+
+        const saveData = JSON.parse(saveString);
+
+        // Validate save data
+        if (!saveData || !saveData.gameState) {
+            console.error('Invalid save data');
+            return false;
+        }
+
+        const saved = saveData.gameState;
+
+        // Restore core stats
+        gameState.totalWords = saved.totalWords || 0;
+        gameState.totalPages = saved.totalPages || 0;
+        gameState.currentBookIndex = saved.currentBookIndex || 0;
+        gameState.currentBookPages = saved.currentBookPages || 0;
+        gameState.booksCompleted = saved.booksCompleted || [];
+        gameState.wordsPerClick = saved.wordsPerClick || 1;
+        gameState.stage = saved.stage || 1;
+        gameState.passivePagesPerSecond = saved.passivePagesPerSecond || 0;
+        gameState.currentBookMultiplier = saved.currentBookMultiplier || 1;
+        gameState.discussionPoints = saved.discussionPoints || 0;
+        gameState.discussionPointsPerClick = saved.discussionPointsPerClick || 1;
+        gameState.careerExpertRuleUnlocked = saved.careerExpertRuleUnlocked || false;
+        gameState.greenlightUnlocked = saved.greenlightUnlocked || false;
+        gameState.globalMultiplier = saved.globalMultiplier || 1.0;
+        gameState.gameStartTime = saved.gameStartTime || Date.now();
+        gameState.totalPlayTime = saved.totalPlayTime || 0;
+
+        // Restore member states
+        if (saved.members) {
+            for (const [key, memberData] of Object.entries(saved.members)) {
+                if (gameState.members[key]) {
+                    gameState.members[key].available = memberData.available || false;
+                    gameState.members[key].unlocked = memberData.unlocked || false;
+                    gameState.members[key].level = memberData.level || 0;
+                    gameState.members[key].currentPPS = memberData.currentPPS || gameState.members[key].basePPS;
+                }
+            }
+        }
+
+        // Restore upgrade states
+        if (saved.upgrades) {
+            for (const [key, upgradeData] of Object.entries(saved.upgrades)) {
+                if (gameState.upgrades[key]) {
+                    gameState.upgrades[key].level = upgradeData.level || 0;
+                }
+            }
+        }
+
+        // No offline progress - game only progresses when tab is active
+
+        console.log('Game loaded successfully');
+        return true;
+    } catch (error) {
+        console.error('Failed to load game:', error);
+        return false;
+    }
+}
+
 // Game loop (10 FPS)
 let lastTime = Date.now();
 function gameLoop() {
+    // Don't progress if game is paused (tab hidden)
+    if (isGamePaused) {
+        lastTime = Date.now(); // Reset timer to prevent time accumulation
+        return;
+    }
+
     const now = Date.now();
     const deltaTime = (now - lastTime) / 1000; // Convert to seconds
     lastTime = now;
@@ -571,6 +709,9 @@ async function init() {
     // Load books data
     await loadBooks();
 
+    // Load saved game (if exists)
+    loadGame();
+
     // Set up click handler for read button
     elements.readButton.addEventListener('click', handleReadClick);
 
@@ -592,12 +733,38 @@ async function init() {
         }
     });
 
+    // Track when tab was hidden
+    let hiddenAt = null;
+
+    // Pause game when tab is hidden (Page Visibility API)
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            isGamePaused = true;
+            hiddenAt = Date.now();
+            saveGame(); // Save when leaving
+            console.log('Game paused (tab hidden)');
+        } else {
+            isGamePaused = false;
+            lastTime = Date.now(); // Reset timer to prevent time jump
+
+            // Show welcome back message if away for more than 5 seconds
+            if (hiddenAt && (Date.now() - hiddenAt) > 5000) {
+                showMessage('Welcome Back!', 'Your book club missed you!', 'normal');
+            }
+            hiddenAt = null;
+            console.log('Game resumed (tab visible)');
+        }
+    });
+
     // Initial render of members and upgrades
     renderMembers();
     renderUpgrades();
 
     // Start game loop (10 FPS = 100ms interval)
     setInterval(gameLoop, 100);
+
+    // Start auto-save (every 10 seconds)
+    setInterval(saveGame, AUTO_SAVE_INTERVAL);
 
     // Initial display update
     updateDisplay();
