@@ -473,32 +473,75 @@ section h2 {
     margin-bottom: 0;
 }
 
-.upgrade-row:not(.locked) {
-    cursor: pointer;
-    border-color: var(--leather-brown);
-}
-
-.upgrade-row:not(.locked):hover {
-    background: rgba(139, 69, 19, 0.08);
-    transform: translateX(3px);
+.upgrade-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .upgrade-name {
     font-weight: 600;
+    color: var(--text-ink);
+}
+
+.upgrade-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
 }
 
 .upgrade-cost {
     font-size: 0.85rem;
-    color: var(--forest-green);
     font-weight: 600;
-    background: rgba(45, 74, 62, 0.1);
-    padding: 4px 10px;
+    padding: 4px 12px;
     border-radius: 12px;
+    white-space: nowrap;
 }
 
-.upgrade-row.locked {
-    opacity: 0.4;
-    border-style: dashed;
+/* Affordable upgrade */
+.upgrade-row.affordable {
+    cursor: pointer;
+    border-color: var(--forest-green);
+    background: rgba(45, 74, 62, 0.03);
+}
+
+.upgrade-row.affordable:hover {
+    background: rgba(45, 74, 62, 0.1);
+    transform: translateX(3px);
+}
+
+.upgrade-row.affordable .upgrade-cost {
+    color: white;
+    background: var(--forest-green);
+}
+
+/* Unaffordable upgrade */
+.upgrade-row.unaffordable {
+    opacity: 0.7;
+}
+
+.upgrade-row.unaffordable .upgrade-cost {
+    color: var(--text-muted);
+    background: var(--border-soft);
+}
+
+.upgrade-row.unaffordable .upgrade-cost.disabled {
+    color: var(--text-muted);
+}
+
+/* Maxed/Owned upgrade */
+.upgrade-row.maxed {
+    background: rgba(45, 74, 62, 0.05);
+    border-color: var(--forest-green);
+}
+
+.upgrade-row.maxed .upgrade-name {
+    color: var(--forest-green);
+}
+
+.upgrade-cost.owned {
+    color: var(--forest-green);
+    background: rgba(45, 74, 62, 0.15);
+    font-style: italic;
 }
 
 .upgrade-row.locked .upgrade-cost {

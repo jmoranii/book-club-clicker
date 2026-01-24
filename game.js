@@ -73,10 +73,40 @@ const gameState = {
     careerExpertRuleUnlocked: false,
     greenlightUnlocked: false,
 
-    // Upgrades (to be implemented in Phase 4)
+    // Upgrades
     upgrades: {
-        speedReading: { level: 0, cost: 10 }
+        speedReading: {
+            name: 'Speed Reading',
+            description: '+10 words per click',
+            level: 0,
+            baseCost: 25,
+            costMultiplier: 1.5,
+            maxLevel: null,
+            effect: 10
+        },
+        readingHabit: {
+            name: 'Reading Habit',
+            description: '+1 passive page/second',
+            level: 0,
+            baseCost: 100,
+            costMultiplier: 2,
+            maxLevel: null,
+            effect: 1
+        },
+        focusedReading: {
+            name: 'Focused Reading',
+            description: '2x progress on current book',
+            level: 0,
+            baseCost: 200,
+            costMultiplier: 1,
+            maxLevel: 1,
+            effect: 2
+        }
     },
+
+    // Passive bonus from upgrades
+    passivePagesPerSecond: 0,
+    currentBookMultiplier: 1,
 
     // Multipliers
     globalMultiplier: 1.0,
@@ -100,7 +130,8 @@ const elements = {
     bookProgress: null,
     bookTitle: null,
     messageContainer: null,
-    membersContainer: null
+    membersContainer: null,
+    upgradesContainer: null
 };
 
 // Initialize DOM element references
@@ -117,6 +148,7 @@ function initElements() {
     elements.bookTitle = document.getElementById('book-title');
     elements.messageContainer = document.getElementById('message-container');
     elements.membersContainer = document.getElementById('members-container');
+    elements.upgradesContainer = document.getElementById('upgrades-container');
 }
 
 // Load books data from JSON
@@ -152,14 +184,17 @@ function calculatePages(words) {
     return Math.floor(words / WORDS_PER_PAGE);
 }
 
-// Calculate total pages per second from all members
+// Calculate total pages per second from all members and upgrades
 function calculatePagesPerSecond() {
     let pps = 0;
+    // Add member contributions
     for (const member of Object.values(gameState.members)) {
         if (member.unlocked) {
             pps += member.currentPPS;
         }
     }
+    // Add passive bonus from Reading Habit upgrade
+    pps += gameState.passivePagesPerSecond;
     return pps * gameState.globalMultiplier;
 }
 
@@ -255,15 +290,97 @@ function renderMembers() {
     }
 
     elements.membersContainer.innerHTML = html;
+}
 
-    // Attach click handlers to recruit buttons
-    const recruitButtons = elements.membersContainer.querySelectorAll('.recruit-btn:not(.disabled)');
-    recruitButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const memberKey = e.target.dataset.member;
-            recruitMember(memberKey);
-        });
-    });
+// Calculate current cost for an upgrade
+function calculateUpgradeCost(upgradeKey) {
+    const upgrade = gameState.upgrades[upgradeKey];
+    return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.level));
+}
+
+// Purchase an upgrade
+function purchaseUpgrade(upgradeKey) {
+    const upgrade = gameState.upgrades[upgradeKey];
+
+    // Check if maxed
+    if (upgrade.maxLevel !== null && upgrade.level >= upgrade.maxLevel) {
+        return false;
+    }
+
+    const cost = calculateUpgradeCost(upgradeKey);
+
+    // Check if can afford
+    if (gameState.totalPages < cost) {
+        showMessage('Not Enough Pages', `You need ${formatNumber(cost)} pages for ${upgrade.name}.`, 'normal');
+        return false;
+    }
+
+    // Deduct pages
+    gameState.totalPages -= cost;
+    gameState.totalWords = gameState.totalPages * WORDS_PER_PAGE;
+
+    // Apply upgrade effect
+    upgrade.level++;
+
+    switch (upgradeKey) {
+        case 'speedReading':
+            gameState.wordsPerClick += upgrade.effect;
+            showMessage('Upgrade!', `${upgrade.name}: +${upgrade.effect} words per click`, 'special');
+            break;
+        case 'readingHabit':
+            gameState.passivePagesPerSecond += upgrade.effect;
+            showMessage('Upgrade!', `${upgrade.name}: +${upgrade.effect} passive page/second`, 'special');
+            break;
+        case 'focusedReading':
+            gameState.currentBookMultiplier = upgrade.effect;
+            showMessage('Upgrade!', `${upgrade.name}: 2x book progress activated!`, 'special');
+            break;
+    }
+
+    renderUpgrades();
+    updateDisplay();
+    return true;
+}
+
+// Render upgrades section
+function renderUpgrades() {
+    if (!elements.upgradesContainer) return;
+
+    const upgradeOrder = ['speedReading', 'readingHabit', 'focusedReading'];
+    let html = '';
+
+    for (const key of upgradeOrder) {
+        const upgrade = gameState.upgrades[key];
+        const cost = calculateUpgradeCost(key);
+        const isMaxed = upgrade.maxLevel !== null && upgrade.level >= upgrade.maxLevel;
+        const canAfford = gameState.totalPages >= cost;
+
+        let rowClass = 'upgrade-row';
+        let levelText = '';
+        let costText = '';
+
+        if (isMaxed) {
+            rowClass += ' maxed';
+            levelText = '';
+            costText = '<span class="upgrade-cost owned">OWNED</span>';
+        } else {
+            rowClass += canAfford ? ' affordable' : ' unaffordable';
+            levelText = upgrade.maxLevel === null ? ` (Lv.${upgrade.level})` : '';
+            costText = `<span class="upgrade-cost ${canAfford ? '' : 'disabled'}">${formatNumber(cost)}p</span>`;
+        }
+
+        html += `
+            <div class="${rowClass}" data-upgrade="${key}">
+                <div class="upgrade-info">
+                    <span class="upgrade-name">${upgrade.name}${levelText}</span>
+                    <span class="upgrade-desc">${upgrade.description}</span>
+                </div>
+                ${costText}
+            </div>
+        `;
+    }
+
+    elements.upgradesContainer.innerHTML = html;
 }
 
 // Show completion message
@@ -353,8 +470,8 @@ function handleReadClick() {
     gameState.totalWords += gameState.wordsPerClick;
     gameState.totalPages = calculatePages(gameState.totalWords);
 
-    // Add pages to current book
-    const pagesGained = gameState.wordsPerClick / WORDS_PER_PAGE;
+    // Add pages to current book (with multiplier from Focused Reading)
+    const pagesGained = (gameState.wordsPerClick / WORDS_PER_PAGE) * gameState.currentBookMultiplier;
     gameState.currentBookPages += pagesGained;
 
     // Check for book completion
@@ -366,7 +483,24 @@ function handleReadClick() {
     updateDisplay();
 }
 
-// Update all display elements
+// Light update for game loop - only updates numbers, not DOM structure
+function updateStatsDisplay() {
+    const currentBook = getCurrentBook();
+
+    // Update stats
+    elements.totalWords.textContent = formatNumber(gameState.totalWords);
+    elements.totalPages.textContent = formatNumber(gameState.totalPages);
+
+    // Update click stats
+    elements.pagesPerSecond.textContent = formatNumber(calculatePagesPerSecond());
+
+    // Update book progress
+    const progress = Math.min((gameState.currentBookPages / currentBook.pages_required) * 100, 100);
+    elements.currentPages.textContent = Math.floor(Math.min(gameState.currentBookPages, currentBook.pages_required));
+    elements.bookProgress.style.width = progress + '%';
+}
+
+// Full display update - includes re-rendering members and upgrades
 function updateDisplay() {
     const currentBook = getCurrentBook();
 
@@ -390,6 +524,9 @@ function updateDisplay() {
 
     // Update member recruit button states
     renderMembers();
+
+    // Update upgrade availability
+    renderUpgrades();
 }
 
 // Format large numbers (K, M, B)
@@ -407,21 +544,23 @@ function gameLoop() {
     const deltaTime = (now - lastTime) / 1000; // Convert to seconds
     lastTime = now;
 
-    // Add passive pages from members
+    // Add passive pages from members and upgrades
     const pps = calculatePagesPerSecond();
     if (pps > 0) {
         const pagesGained = pps * deltaTime;
         gameState.totalWords += pagesGained * WORDS_PER_PAGE;
         gameState.totalPages = calculatePages(gameState.totalWords);
-        gameState.currentBookPages += pagesGained;
+        // Apply current book multiplier from Focused Reading
+        gameState.currentBookPages += pagesGained * gameState.currentBookMultiplier;
 
         // Check for book completion
         const currentBook = getCurrentBook();
         if (gameState.currentBookPages >= currentBook.pages_required) {
             completeBook();
+        } else {
+            // Only update stats, not full DOM rebuild
+            updateStatsDisplay();
         }
-
-        updateDisplay();
     }
 }
 
@@ -432,11 +571,30 @@ async function init() {
     // Load books data
     await loadBooks();
 
-    // Set up click handler
+    // Set up click handler for read button
     elements.readButton.addEventListener('click', handleReadClick);
 
-    // Initial render of members
+    // Set up event delegation for members container (click handlers attached once)
+    elements.membersContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.recruit-btn');
+        if (btn && !btn.classList.contains('disabled')) {
+            const memberKey = btn.dataset.member;
+            recruitMember(memberKey);
+        }
+    });
+
+    // Set up event delegation for upgrades container (click handlers attached once)
+    elements.upgradesContainer.addEventListener('click', (e) => {
+        const row = e.target.closest('.upgrade-row.affordable');
+        if (row) {
+            const upgradeKey = row.dataset.upgrade;
+            purchaseUpgrade(upgradeKey);
+        }
+    });
+
+    // Initial render of members and upgrades
     renderMembers();
+    renderUpgrades();
 
     // Start game loop (10 FPS = 100ms interval)
     setInterval(gameLoop, 100);
