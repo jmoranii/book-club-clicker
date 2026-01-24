@@ -719,3 +719,29 @@ section h2 {
         box-shadow: none;
     }
 }
+
+/* Dev Tools (remove before release) */
+.dev-tools {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--border-soft);
+    text-align: center;
+}
+
+.reset-btn {
+    font-family: inherit;
+    font-size: 0.8rem;
+    padding: 8px 16px;
+    background: #666;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+}
+
+.reset-btn:hover {
+    opacity: 1;
+    background: #c44;
+}

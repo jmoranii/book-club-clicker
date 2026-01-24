@@ -9,6 +9,13 @@ const AUTO_SAVE_INTERVAL = 10000; // 10 seconds
 // Game pause state (for when tab is hidden)
 let isGamePaused = false;
 
+// Interval IDs (for cleanup on reset)
+let gameLoopInterval = null;
+let autoSaveInterval = null;
+
+// Flag to prevent saving during reset
+let isResetting = false;
+
 // Books data (loaded from JSON)
 let booksData = [];
 
@@ -183,6 +190,11 @@ async function loadBooks() {
 // Get current book data
 function getCurrentBook() {
     return booksData[gameState.currentBookIndex] || booksData[booksData.length - 1];
+}
+
+// Check if all available books have been completed
+function isStage1Complete() {
+    return gameState.booksCompleted.length >= booksData.length;
 }
 
 // Calculate pages from words (every 250 words = 1 page)
@@ -416,6 +428,11 @@ function showMessage(title, text, type = 'normal') {
 function completeBook() {
     const book = getCurrentBook();
 
+    // Don't complete a book that's already been completed (prevents infinite loop on last book)
+    if (gameState.booksCompleted.includes(book.number)) {
+        return;
+    }
+
     // Add to completed list
     gameState.booksCompleted.push(book.number);
 
@@ -442,9 +459,9 @@ function completeBook() {
     checkMemberUnlocks();
 
     // Advance to next book
+    gameState.currentBookPages = 0;
     if (gameState.currentBookIndex < booksData.length - 1) {
         gameState.currentBookIndex++;
-        gameState.currentBookPages = 0;
     }
 
     updateDisplay();
@@ -469,6 +486,9 @@ function handleSpecialBook(book) {
             // Unlock Career Expert Rule
             gameState.careerExpertRuleUnlocked = true;
             // Stage 2 transition will be implemented in Phase 6
+            setTimeout(() => {
+                showMessage('STAGE 1 COMPLETE!', 'You\'ve finished all available books!<br><em>Stage 2 coming soon...</em>', 'transition');
+            }, 500);
             break;
     }
 }
@@ -479,14 +499,17 @@ function handleReadClick() {
     gameState.totalWords += gameState.wordsPerClick;
     gameState.totalPages = calculatePages(gameState.totalWords);
 
-    // Add pages to current book (with multiplier from Focused Reading)
-    const pagesGained = (gameState.wordsPerClick / WORDS_PER_PAGE) * gameState.currentBookMultiplier;
-    gameState.currentBookPages += pagesGained;
+    // Only accumulate book progress if Stage 1 is not complete
+    if (!isStage1Complete()) {
+        // Add pages to current book (with multiplier from Focused Reading)
+        const pagesGained = (gameState.wordsPerClick / WORDS_PER_PAGE) * gameState.currentBookMultiplier;
+        gameState.currentBookPages += pagesGained;
 
-    // Check for book completion
-    const currentBook = getCurrentBook();
-    if (gameState.currentBookPages >= currentBook.pages_required) {
-        completeBook();
+        // Check for book completion
+        const currentBook = getCurrentBook();
+        if (gameState.currentBookPages >= currentBook.pages_required) {
+            completeBook();
+        }
     }
 
     updateDisplay();
@@ -548,6 +571,11 @@ function formatNumber(num) {
 
 // Save game to localStorage
 function saveGame() {
+    // Don't save if we're in the middle of resetting
+    if (isResetting) {
+        console.log('Save skipped (resetting)');
+        return false;
+    }
     try {
         const saveData = {
             version: SAVE_VERSION,
@@ -605,6 +633,7 @@ function saveGame() {
 function loadGame() {
     try {
         const saveString = localStorage.getItem(SAVE_KEY);
+        console.log('Loading game, save exists:', !!saveString);
         if (!saveString) {
             console.log('No save found, starting fresh');
             return false;
@@ -688,15 +717,21 @@ function gameLoop() {
         const pagesGained = pps * deltaTime;
         gameState.totalWords += pagesGained * WORDS_PER_PAGE;
         gameState.totalPages = calculatePages(gameState.totalWords);
-        // Apply current book multiplier from Focused Reading
-        gameState.currentBookPages += pagesGained * gameState.currentBookMultiplier;
 
-        // Check for book completion
-        const currentBook = getCurrentBook();
-        if (gameState.currentBookPages >= currentBook.pages_required) {
-            completeBook();
+        // Only accumulate book progress if Stage 1 is not complete
+        if (!isStage1Complete()) {
+            // Apply current book multiplier from Focused Reading
+            gameState.currentBookPages += pagesGained * gameState.currentBookMultiplier;
+
+            // Check for book completion
+            const currentBook = getCurrentBook();
+            if (gameState.currentBookPages >= currentBook.pages_required) {
+                completeBook();
+            } else {
+                // Only update stats, not full DOM rebuild
+                updateStatsDisplay();
+            }
         } else {
-            // Only update stats, not full DOM rebuild
             updateStatsDisplay();
         }
     }
@@ -710,7 +745,8 @@ async function init() {
     await loadBooks();
 
     // Load saved game (if exists)
-    loadGame();
+    const saveLoaded = loadGame();
+    console.log('Save loaded?', saveLoaded, '| Current book index:', gameState.currentBookIndex, '| Books completed:', gameState.booksCompleted.length);
 
     // Set up click handler for read button
     elements.readButton.addEventListener('click', handleReadClick);
@@ -761,15 +797,40 @@ async function init() {
     renderUpgrades();
 
     // Start game loop (10 FPS = 100ms interval)
-    setInterval(gameLoop, 100);
+    gameLoopInterval = setInterval(gameLoop, 100);
 
     // Start auto-save (every 10 seconds)
-    setInterval(saveGame, AUTO_SAVE_INTERVAL);
+    autoSaveInterval = setInterval(saveGame, AUTO_SAVE_INTERVAL);
 
     // Initial display update
     updateDisplay();
 
+    // Dev tools
+    document.getElementById('reset-game')?.addEventListener('click', resetGame);
+
     console.log('Book Club Clicker initialized!');
+}
+
+// Reset game (dev tool)
+function resetGame() {
+    if (confirm('Are you sure you want to reset ALL progress? This cannot be undone.')) {
+        console.log('Resetting game...');
+        // Set flag to prevent any saves during reset
+        isResetting = true;
+        // Stop all intervals to prevent auto-save race condition
+        clearInterval(gameLoopInterval);
+        clearInterval(autoSaveInterval);
+        console.log('Intervals cleared');
+        localStorage.removeItem(SAVE_KEY);
+        // Verify it was actually removed
+        const stillExists = localStorage.getItem(SAVE_KEY);
+        console.log('After removeItem, save still exists:', !!stillExists);
+        if (stillExists) {
+            alert('WARNING: localStorage.removeItem failed! Save still exists.');
+        }
+        console.log('Reloading...');
+        location.reload();
+    }
 }
 
 // Start when DOM is ready
