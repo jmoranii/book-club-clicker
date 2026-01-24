@@ -21,12 +21,48 @@ const gameState = {
     // Stage
     stage: 1,
 
-    // Members (to be implemented in Phase 3)
+    // Members
     members: {
-        james: { unlocked: false, level: 0, basePPS: 0.3, currentPPS: 0.3, unlockBook: 5 },
-        sydney: { unlocked: false, level: 0, basePPS: 0.5, currentPPS: 0.5, unlockBook: 10 },
-        tiffany: { unlocked: false, level: 0, basePPS: 0.3, currentPPS: 0.3, unlockBook: 15 },
-        winslow: { unlocked: false, level: 0, basePPS: 0.4, currentPPS: 0.4, unlockBook: 20 }
+        james: {
+            name: 'James',
+            unlockBook: 5,
+            recruitCost: 50,
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 0.3,
+            currentPPS: 0.3
+        },
+        sydney: {
+            name: 'Sydney',
+            unlockBook: 10,
+            recruitCost: 200,
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 0.5,
+            currentPPS: 0.5
+        },
+        tiffany: {
+            name: 'Tiffany',
+            unlockBook: 15,
+            recruitCost: 800,
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 0.3,
+            currentPPS: 0.3
+        },
+        winslow: {
+            name: 'Winslow',
+            unlockBook: 20,
+            recruitCost: 2000,
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 0.4,
+            currentPPS: 0.4
+        }
     },
 
     // Stage 2 (to be implemented in Phase 6)
@@ -63,7 +99,8 @@ const elements = {
     requiredPages: null,
     bookProgress: null,
     bookTitle: null,
-    messageContainer: null
+    messageContainer: null,
+    membersContainer: null
 };
 
 // Initialize DOM element references
@@ -79,6 +116,7 @@ function initElements() {
     elements.bookProgress = document.getElementById('book-progress');
     elements.bookTitle = document.getElementById('book-title');
     elements.messageContainer = document.getElementById('message-container');
+    elements.membersContainer = document.getElementById('members-container');
 }
 
 // Load books data from JSON
@@ -125,6 +163,109 @@ function calculatePagesPerSecond() {
     return pps * gameState.globalMultiplier;
 }
 
+// Check if any members should become available after book completion
+function checkMemberUnlocks() {
+    const booksCompleted = gameState.booksCompleted.length;
+
+    for (const [key, member] of Object.entries(gameState.members)) {
+        if (!member.available && !member.unlocked && booksCompleted >= member.unlockBook) {
+            member.available = true;
+            showMessage(
+                'New Member Available!',
+                `${member.name} wants to join the book club!<br><em>Cost: ${member.recruitCost} pages</em>`,
+                'member'
+            );
+        }
+    }
+
+    renderMembers();
+}
+
+// Recruit a member
+function recruitMember(memberKey) {
+    const member = gameState.members[memberKey];
+
+    if (!member || !member.available || member.unlocked) {
+        return false;
+    }
+
+    if (gameState.totalPages < member.recruitCost) {
+        showMessage('Not Enough Pages', `You need ${member.recruitCost} pages to recruit ${member.name}.`, 'normal');
+        return false;
+    }
+
+    // Deduct pages
+    gameState.totalPages -= member.recruitCost;
+    gameState.totalWords = gameState.totalPages * WORDS_PER_PAGE;
+
+    // Recruit member
+    member.unlocked = true;
+
+    showMessage(
+        `${member.name} Joined!`,
+        `${member.name} is now reading with the club!<br><em>+${member.currentPPS} pages/second</em>`,
+        'member'
+    );
+
+    renderMembers();
+    updateDisplay();
+
+    return true;
+}
+
+// Render members section
+function renderMembers() {
+    if (!elements.membersContainer) return;
+
+    const memberOrder = ['james', 'sydney', 'tiffany', 'winslow'];
+    let html = '';
+
+    for (const key of memberOrder) {
+        const member = gameState.members[key];
+        let rowClass = 'member-row';
+        let checkbox = '☐';
+        let status = '';
+        let action = '';
+
+        if (member.unlocked) {
+            // Recruited
+            rowClass += ' recruited';
+            checkbox = '☑';
+            status = `<span class="member-pps">${member.currentPPS.toFixed(1)} p/s</span>`;
+        } else if (member.available) {
+            // Available to recruit
+            rowClass += ' available';
+            const canAfford = gameState.totalPages >= member.recruitCost;
+            const btnClass = canAfford ? 'recruit-btn' : 'recruit-btn disabled';
+            action = `<button class="${btnClass}" data-member="${key}">Recruit: ${member.recruitCost}p</button>`;
+        } else {
+            // Locked
+            rowClass += ' locked';
+            status = `<span class="member-status">[Unlocks at Book ${member.unlockBook}]</span>`;
+        }
+
+        html += `
+            <div class="${rowClass}">
+                <span class="member-checkbox">${checkbox}</span>
+                <span class="member-name">${member.name}</span>
+                ${status}
+                ${action}
+            </div>
+        `;
+    }
+
+    elements.membersContainer.innerHTML = html;
+
+    // Attach click handlers to recruit buttons
+    const recruitButtons = elements.membersContainer.querySelectorAll('.recruit-btn:not(.disabled)');
+    recruitButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const memberKey = e.target.dataset.member;
+            recruitMember(memberKey);
+        });
+    });
+}
+
 // Show completion message
 function showMessage(title, text, type = 'normal') {
     const messageDiv = document.createElement('div');
@@ -168,6 +309,9 @@ function completeBook() {
 
     // Handle special book effects
     handleSpecialBook(book);
+
+    // Check for member unlocks
+    checkMemberUnlocks();
 
     // Advance to next book
     if (gameState.currentBookIndex < booksData.length - 1) {
@@ -240,6 +384,9 @@ function updateDisplay() {
     elements.currentPages.textContent = Math.floor(Math.min(gameState.currentBookPages, currentBook.pages_required));
     elements.requiredPages.textContent = currentBook.pages_required;
     elements.bookProgress.style.width = progress + '%';
+
+    // Update member recruit button states
+    renderMembers();
 }
 
 // Format large numbers (K, M, B)
@@ -250,14 +397,14 @@ function formatNumber(num) {
     return (num / 1000000000).toFixed(1) + 'B';
 }
 
-// Game loop (10 FPS) - will be more useful in Phase 3 with members
+// Game loop (10 FPS)
 let lastTime = Date.now();
 function gameLoop() {
     const now = Date.now();
     const deltaTime = (now - lastTime) / 1000; // Convert to seconds
     lastTime = now;
 
-    // Add passive pages from members (Phase 3)
+    // Add passive pages from members
     const pps = calculatePagesPerSecond();
     if (pps > 0) {
         const pagesGained = pps * deltaTime;
@@ -284,6 +431,9 @@ async function init() {
 
     // Set up click handler
     elements.readButton.addEventListener('click', handleReadClick);
+
+    // Initial render of members
+    renderMembers();
 
     // Start game loop (10 FPS = 100ms interval)
     setInterval(gameLoop, 100);

@@ -49,7 +49,7 @@ An incremental clicker game celebrating a 10-year book club's journey through 16
 
 - [x] Phase 1: Foundation (HTML, CSS, JS, click-to-read mechanics)
 - [x] Phase 2: Book Progression (load books.json, book completion)
-- [ ] Phase 3: Members & Passive Generation
+- [x] Phase 3: Members & Passive Generation
 - [ ] Phase 4: Upgrades System
 - [ ] Phase 5: Save System
 - [ ] Phase 6: Stage 2 Transition

@@ -376,6 +376,81 @@ section h2 {
     color: var(--text-muted);
 }
 
+/* Available member - ready to recruit */
+.member-row.available {
+    background: rgba(201, 162, 39, 0.08);
+    border: 1px dashed var(--gold);
+    border-radius: 4px;
+    padding: 12px 10px;
+    margin: -1px 0;
+}
+
+.member-row.available .member-name {
+    color: var(--leather-brown);
+    font-weight: 700;
+}
+
+/* Recruited member */
+.member-row.recruited {
+    background: rgba(45, 74, 62, 0.05);
+}
+
+.member-row.recruited .member-checkbox {
+    color: var(--forest-green);
+}
+
+.member-row.recruited .member-name {
+    color: var(--forest-dark);
+    font-weight: 600;
+}
+
+.member-pps {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--forest-green);
+    background: rgba(45, 74, 62, 0.1);
+    padding: 3px 10px;
+    border-radius: 12px;
+}
+
+/* Recruit button */
+.recruit-btn {
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    background: linear-gradient(to bottom, var(--gold), #b8922a);
+    color: var(--text-ink);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 0 #9a7a1f;
+}
+
+.recruit-btn:hover {
+    background: linear-gradient(to bottom, #d4ad32, var(--gold));
+    transform: translateY(-1px);
+    box-shadow: 0 3px 0 #9a7a1f;
+}
+
+.recruit-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 #9a7a1f;
+}
+
+.recruit-btn.disabled {
+    background: var(--border-soft);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.6;
+}
+
+.recruit-btn.disabled:hover {
+    transform: none;
+}
+
 /* Upgrades Section */
 .upgrades-section h2 {
     color: var(--leather-brown);
