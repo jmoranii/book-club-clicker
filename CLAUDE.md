@@ -14,7 +14,7 @@ An incremental clicker game celebrating a 10-year book club's journey through 16
 - `index.html` - Game UI structure
 - `style.css` - Cozy library aesthetic (Libre Baskerville + Source Sans 3 fonts)
 - `game.js` - Game logic, state management, game loop
-- `books.json` - All 168 books with metadata
+- `books.json` - Book data (currently 25 books for Stage 1, 168 total planned)
 - `CLAUDE.md` - This file
 
 ## Game Mechanics
@@ -27,7 +27,7 @@ An incremental clicker game celebrating a 10-year book club's journey through 16
 - `WORDS_PER_PAGE = 250`
 - Game loop runs at 10 FPS (100ms interval)
 - Auto-save every 10 seconds
-- Offline progress capped at 24 hours
+- No offline progress (game pauses when tab is hidden)
 
 ## Member Unlock Order
 
@@ -51,10 +51,16 @@ An incremental clicker game celebrating a 10-year book club's journey through 16
 - [x] Phase 2: Book Progression (load books.json, book completion)
 - [x] Phase 3: Members & Passive Generation
 - [x] Phase 4: Upgrades System
-- [x] Phase 5: Save System
+- [x] Phase 5: Save System (localStorage, auto-save, reset button)
+- [x] Phase 5.5: Stage 1 Complete state (stops book progress when all 25 books done)
 - [ ] Phase 6: Stage 2 Transition
-- [ ] Phase 7: Special Events & Full Book Data
+- [ ] Phase 7: Special Events & Full Book Data (add remaining 143 books)
 - [ ] Phase 8: Polish & Deploy
+
+## Dev Tools (remove before release)
+
+- Reset button at bottom of page - wipes localStorage and restarts game
+- Console logging for save/load debugging
 
 ## Style Guidelines
 
