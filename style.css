@@ -436,6 +436,114 @@ section h2 {
     position: relative;
 }
 
+/* Message Container - Floating notifications */
+.message-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+    max-width: 500px;
+    width: 90%;
+}
+
+.message {
+    background: var(--bg-cream);
+    border: 2px solid var(--forest-green);
+    border-radius: 6px;
+    padding: 15px 20px;
+    box-shadow:
+        0 4px 20px var(--shadow-deep),
+        0 0 0 1px rgba(255,255,255,0.5) inset;
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+    transition: all 0.3s ease;
+    text-align: center;
+    pointer-events: auto;
+}
+
+.message.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.message-title {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--forest-dark);
+    margin-bottom: 6px;
+}
+
+.message-text {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.message-text em {
+    color: var(--forest-green);
+    font-style: italic;
+}
+
+/* Message Types */
+.message-special {
+    border-color: var(--gold);
+    background: linear-gradient(to bottom, #fffef5, var(--bg-cream));
+}
+
+.message-special::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+}
+
+.message-special .message-title {
+    color: var(--leather-brown);
+}
+
+.message-viral {
+    border-color: var(--burgundy);
+    background: linear-gradient(to bottom, #fff5f5, var(--bg-cream));
+    animation: pulse-message 0.5s ease;
+}
+
+.message-viral .message-title {
+    color: var(--burgundy);
+}
+
+.message-member {
+    border-color: var(--leather-brown);
+    background: linear-gradient(to bottom, #faf5f0, var(--bg-cream));
+}
+
+.message-member .message-title {
+    color: var(--leather-brown);
+}
+
+.message-transition {
+    border-color: var(--accent-navy, #1a3a5c);
+    border-width: 3px;
+    background: linear-gradient(to bottom, #f5f8fa, var(--bg-cream));
+}
+
+.message-transition .message-title {
+    color: var(--accent-navy, #1a3a5c);
+}
+
+@keyframes pulse-message {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(0) scale(1.02); }
+}
+
 /* Subtle animations */
 @keyframes pulse-gold {
     0%, 100% { opacity: 1; }

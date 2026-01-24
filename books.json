@@ -1,1 +1,232 @@
-[]
+[
+  {
+    "number": 1,
+    "title": "The Lies of Locke Lamora",
+    "author": "Scott Lynch",
+    "category": "Fiction",
+    "pages_required": 1,
+    "special": "first_book",
+    "note": "The journey begins..."
+  },
+  {
+    "number": 2,
+    "title": "Brief Interviews with Hideous Men",
+    "author": "David Foster Wallace",
+    "category": "Growth",
+    "pages_required": 15,
+    "special": null,
+    "note": "Literary challenge accepted"
+  },
+  {
+    "number": 3,
+    "title": "The Emperor's Soul",
+    "author": "Brandon Sanderson",
+    "category": "Fiction",
+    "pages_required": 20,
+    "special": null,
+    "note": "Fantasy foundation"
+  },
+  {
+    "number": 4,
+    "title": "The Bell Jar",
+    "author": "Sylvia Plath",
+    "category": "Growth",
+    "pages_required": 25,
+    "special": null,
+    "note": "First step outside comfort zone"
+  },
+  {
+    "number": 5,
+    "title": "Slaughterhouse-Five",
+    "author": "Kurt Vonnegut",
+    "category": "Classic",
+    "pages_required": 30,
+    "special": "member_unlock",
+    "note": "So it goes... James joins the club!"
+  },
+  {
+    "number": 6,
+    "title": "The Road",
+    "author": "Cormac McCarthy",
+    "category": "Fiction",
+    "pages_required": 35,
+    "special": null,
+    "note": "Bleak but beautiful"
+  },
+  {
+    "number": 7,
+    "title": "Thinking, Fast and Slow",
+    "author": "Daniel Kahneman",
+    "category": "Knowledge",
+    "pages_required": 50,
+    "special": "thinking_fast_slow",
+    "career_expert": true,
+    "note": "SO GOOD YOU READ IT TWICE!"
+  },
+  {
+    "number": 8,
+    "title": "The Name of the Wind",
+    "author": "Patrick Rothfuss",
+    "category": "Fiction",
+    "pages_required": 55,
+    "special": null,
+    "note": "Still waiting for book three..."
+  },
+  {
+    "number": 9,
+    "title": "Sapiens",
+    "author": "Yuval Noah Harari",
+    "category": "Knowledge",
+    "pages_required": 60,
+    "special": null,
+    "note": "History of everything"
+  },
+  {
+    "number": 10,
+    "title": "Gone Girl",
+    "author": "Gillian Flynn",
+    "category": "Thriller",
+    "pages_required": 70,
+    "special": "member_unlock",
+    "note": "Plot twist! Sydney joins the club!"
+  },
+  {
+    "number": 11,
+    "title": "The Martian",
+    "author": "Andy Weir",
+    "category": "Fiction",
+    "pages_required": 80,
+    "special": null,
+    "note": "Science the heck out of this"
+  },
+  {
+    "number": 12,
+    "title": "Quiet",
+    "author": "Susan Cain",
+    "category": "Knowledge",
+    "pages_required": 90,
+    "special": null,
+    "career_expert": true,
+    "note": "Power of introverts"
+  },
+  {
+    "number": 13,
+    "title": "Ready Player One",
+    "author": "Ernest Cline",
+    "category": "Fiction",
+    "pages_required": 100,
+    "special": null,
+    "note": "Nostalgia overload"
+  },
+  {
+    "number": 14,
+    "title": "Hamilton",
+    "author": "Ron Chernow",
+    "category": "Knowledge",
+    "pages_required": 120,
+    "special": "hamilton",
+    "career_expert": true,
+    "note": "BOOK CLUB GOES VIRAL!"
+  },
+  {
+    "number": 15,
+    "title": "Dark Matter",
+    "author": "Blake Crouch",
+    "category": "Thriller",
+    "pages_required": 140,
+    "special": "member_unlock",
+    "note": "Mind-bending! Tiffany joins the club!"
+  },
+  {
+    "number": 16,
+    "title": "When Breath Becomes Air",
+    "author": "Paul Kalanithi",
+    "category": "Growth",
+    "pages_required": 160,
+    "special": null,
+    "note": "Profound and moving"
+  },
+  {
+    "number": 17,
+    "title": "The Power of Habit",
+    "author": "Charles Duhigg",
+    "category": "Knowledge",
+    "pages_required": 180,
+    "special": null,
+    "note": "Cue, routine, reward"
+  },
+  {
+    "number": 18,
+    "title": "Recursion",
+    "author": "Blake Crouch",
+    "category": "Thriller",
+    "pages_required": 200,
+    "special": null,
+    "note": "Memory is everything"
+  },
+  {
+    "number": 19,
+    "title": "Educated",
+    "author": "Tara Westover",
+    "category": "Growth",
+    "pages_required": 220,
+    "special": null,
+    "note": "Remarkable journey"
+  },
+  {
+    "number": 20,
+    "title": "Project Hail Mary",
+    "author": "Andy Weir",
+    "category": "Fiction",
+    "pages_required": 250,
+    "special": "member_unlock",
+    "note": "Fist my bump! Winslow joins the club!"
+  },
+  {
+    "number": 21,
+    "title": "Atomic Habits",
+    "author": "James Clear",
+    "category": "Knowledge",
+    "pages_required": 300,
+    "special": null,
+    "career_expert": true,
+    "note": "1% better every day"
+  },
+  {
+    "number": 22,
+    "title": "The Silent Patient",
+    "author": "Alex Michaelides",
+    "category": "Thriller",
+    "pages_required": 350,
+    "special": null,
+    "note": "What a twist"
+  },
+  {
+    "number": 23,
+    "title": "Man's Search for Meaning",
+    "author": "Viktor Frankl",
+    "category": "Growth",
+    "pages_required": 400,
+    "special": null,
+    "note": "Finding purpose"
+  },
+  {
+    "number": 24,
+    "title": "The Midnight Library",
+    "author": "Matt Haig",
+    "category": "Fiction",
+    "pages_required": 450,
+    "special": null,
+    "note": "Infinite possibilities"
+  },
+  {
+    "number": 25,
+    "title": "Blink",
+    "author": "Malcolm Gladwell",
+    "category": "Knowledge",
+    "pages_required": 500,
+    "special": "stage_transition",
+    "career_expert": false,
+    "note": "Career Expert Rule unlocked! (Malcolm is NOT an expert)"
+  }
+]
