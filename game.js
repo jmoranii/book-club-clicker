@@ -78,9 +78,12 @@ const gameState = {
         }
     },
 
-    // Stage 2 (to be implemented in Phase 6)
+    // Stage 2 state
+    bookPhase: 'reading', // 'reading' or 'discussion' (Stage 2 only)
     discussionPoints: 0,
     discussionPointsPerClick: 1,
+    currentDiscussionProgress: 0,
+    engagement: 1.0, // Multiplier that persists between books
 
     // Special unlocks
     careerExpertRuleUnlocked: false,
@@ -144,7 +147,18 @@ const elements = {
     bookTitle: null,
     messageContainer: null,
     membersContainer: null,
-    upgradesContainer: null
+    upgradesContainer: null,
+    // Stage 2 elements
+    stageIndicator: null,
+    phaseIndicator: null,
+    discussionPointsDisplay: null,
+    discussionProgressBar: null,
+    discussionProgressText: null,
+    engagementDisplay: null,
+    readingProgressContainer: null,
+    discussionProgressContainer: null,
+    dpStat: null,
+    engagementStat: null
 };
 
 // Initialize DOM element references
@@ -162,6 +176,17 @@ function initElements() {
     elements.messageContainer = document.getElementById('message-container');
     elements.membersContainer = document.getElementById('members-container');
     elements.upgradesContainer = document.getElementById('upgrades-container');
+    // Stage 2 elements
+    elements.stageIndicator = document.getElementById('stage-indicator');
+    elements.phaseIndicator = document.getElementById('phase-indicator');
+    elements.discussionPointsDisplay = document.getElementById('discussion-points');
+    elements.discussionProgressBar = document.getElementById('discussion-progress');
+    elements.discussionProgressText = document.getElementById('discussion-progress-text');
+    elements.engagementDisplay = document.getElementById('engagement-display');
+    elements.readingProgressContainer = document.getElementById('reading-progress-container');
+    elements.discussionProgressContainer = document.getElementById('discussion-progress-container');
+    elements.dpStat = document.getElementById('dp-stat');
+    elements.engagementStat = document.getElementById('engagement-stat');
 }
 
 // Load books data from JSON
@@ -193,8 +218,79 @@ function getCurrentBook() {
 }
 
 // Check if all available books have been completed
-function isStage1Complete() {
+function isAllBooksComplete() {
     return gameState.booksCompleted.length >= booksData.length;
+}
+
+// Check if currently in Stage 2
+function isStage2() {
+    return gameState.stage === 2;
+}
+
+// Check if in discussion phase (Stage 2 only)
+function isDiscussionPhase() {
+    return gameState.stage === 2 && gameState.bookPhase === 'discussion';
+}
+
+// Get discussion requirement for current book (Stage 2)
+function getDiscussionRequired() {
+    const book = getCurrentBook();
+    return book.discussion_required || 50; // Default to 50 if not specified
+}
+
+// Transition from reading phase to discussion phase (Stage 2)
+function transitionToDiscussionPhase() {
+    gameState.bookPhase = 'discussion';
+    gameState.currentDiscussionProgress = 0;
+
+    const book = getCurrentBook();
+    showMessage(
+        'Ready to Discuss!',
+        `"${book.title}" - The book club has finished reading.<br><em>Click to facilitate the discussion!</em>`,
+        'member'
+    );
+
+    updateDisplay();
+}
+
+// Complete discussion and advance to next book (Stage 2)
+function completeDiscussion() {
+    const book = getCurrentBook();
+
+    // Add to completed list
+    if (!gameState.booksCompleted.includes(book.number)) {
+        gameState.booksCompleted.push(book.number);
+    }
+
+    // Award engagement bonus (simple version - will be expanded in Phase 7)
+    const engagementBonus = 0.05; // +5% for completing a discussion
+    gameState.engagement = Math.min(gameState.engagement + engagementBonus, 3.0); // Cap at 3x
+
+    // Show completion message
+    let messageType = 'normal';
+    if (book.controversy === 'high') messageType = 'special';
+
+    showMessage(
+        `Discussion Complete!`,
+        `"${book.title}" by ${book.author}<br><em>${book.note}</em><br>Engagement: ${gameState.engagement.toFixed(2)}x`,
+        messageType
+    );
+
+    // Handle special book effects
+    handleSpecialBook(book);
+
+    // Reset for next book
+    gameState.currentBookPages = 0;
+    gameState.currentDiscussionProgress = 0;
+    gameState.bookPhase = 'reading';
+
+    // Advance to next book
+    if (gameState.currentBookIndex < booksData.length - 1) {
+        gameState.currentBookIndex++;
+    }
+
+    updateDisplay();
+    saveGame();
 }
 
 // Calculate pages from words (every 250 words = 1 page)
@@ -485,9 +581,11 @@ function handleSpecialBook(book) {
         case 'stage_transition':
             // Unlock Career Expert Rule
             gameState.careerExpertRuleUnlocked = true;
-            // Stage 2 transition will be implemented in Phase 6
+            // Transition to Stage 2
+            gameState.stage = 2;
+            gameState.bookPhase = 'reading';
             setTimeout(() => {
-                showMessage('STAGE 1 COMPLETE!', 'You\'ve finished all available books!<br><em>Stage 2 coming soon...</em>', 'transition');
+                showMessage('STAGE 2 BEGINS!', 'The Discussion Era<br><em>Your members now auto-read. Click to facilitate discussions!</em>', 'transition');
             }, 500);
             break;
     }
@@ -495,19 +593,47 @@ function handleSpecialBook(book) {
 
 // Handle read button click
 function handleReadClick() {
-    // Add words
+    // Check if all books are done
+    if (isAllBooksComplete()) {
+        updateDisplay();
+        return;
+    }
+
+    // Stage 2 Discussion Phase - Generate DP and progress
+    if (isDiscussionPhase()) {
+        // Add discussion points
+        const dpGained = gameState.discussionPointsPerClick * gameState.engagement;
+        gameState.discussionPoints += dpGained;
+
+        // Add to discussion progress (basic "I have thoughts" contributes directly)
+        gameState.currentDiscussionProgress += dpGained;
+
+        // Check for discussion completion
+        const discussionRequired = getDiscussionRequired();
+        if (gameState.currentDiscussionProgress >= discussionRequired) {
+            completeDiscussion();
+        }
+
+        updateDisplay();
+        return;
+    }
+
+    // Stage 1 or Stage 2 Reading Phase - Generate words/pages
     gameState.totalWords += gameState.wordsPerClick;
     gameState.totalPages = calculatePages(gameState.totalWords);
 
-    // Only accumulate book progress if Stage 1 is not complete
-    if (!isStage1Complete()) {
-        // Add pages to current book (with multiplier from Focused Reading)
-        const pagesGained = (gameState.wordsPerClick / WORDS_PER_PAGE) * gameState.currentBookMultiplier;
-        gameState.currentBookPages += pagesGained;
+    // Add pages to current book (with multiplier from Focused Reading)
+    const pagesGained = (gameState.wordsPerClick / WORDS_PER_PAGE) * gameState.currentBookMultiplier;
+    gameState.currentBookPages += pagesGained;
 
-        // Check for book completion
-        const currentBook = getCurrentBook();
-        if (gameState.currentBookPages >= currentBook.pages_required) {
+    // Check for book/phase completion
+    const currentBook = getCurrentBook();
+    if (gameState.currentBookPages >= currentBook.pages_required) {
+        if (isStage2()) {
+            // Stage 2: Transition to discussion phase
+            transitionToDiscussionPhase();
+        } else {
+            // Stage 1: Complete the book
             completeBook();
         }
     }
@@ -526,15 +652,82 @@ function updateStatsDisplay() {
     // Update click stats
     elements.pagesPerSecond.textContent = formatNumber(calculatePagesPerSecond());
 
-    // Update book progress
-    const progress = Math.min((gameState.currentBookPages / currentBook.pages_required) * 100, 100);
-    elements.currentPages.textContent = Math.floor(Math.min(gameState.currentBookPages, currentBook.pages_required));
-    elements.bookProgress.style.width = progress + '%';
+    // Update Stage 2 stats if visible
+    if (elements.discussionPointsDisplay && isStage2()) {
+        elements.discussionPointsDisplay.textContent = formatNumber(Math.floor(gameState.discussionPoints));
+    }
+    if (elements.engagementDisplay && isStage2()) {
+        elements.engagementDisplay.textContent = gameState.engagement.toFixed(2);
+    }
+
+    // Update progress based on current phase
+    if (isDiscussionPhase()) {
+        const discussionRequired = getDiscussionRequired();
+        const discussionProgress = Math.min((gameState.currentDiscussionProgress / discussionRequired) * 100, 100);
+        if (elements.discussionProgressBar) {
+            elements.discussionProgressBar.style.width = discussionProgress + '%';
+        }
+        if (elements.discussionProgressText) {
+            elements.discussionProgressText.textContent = `${Math.floor(gameState.currentDiscussionProgress)}/${discussionRequired} discussion`;
+        }
+    } else {
+        const progress = Math.min((gameState.currentBookPages / currentBook.pages_required) * 100, 100);
+        elements.currentPages.textContent = Math.floor(Math.min(gameState.currentBookPages, currentBook.pages_required));
+        elements.bookProgress.style.width = progress + '%';
+    }
 }
 
 // Full display update - includes re-rendering members and upgrades
 function updateDisplay() {
     const currentBook = getCurrentBook();
+    const inStage2 = isStage2();
+    const inDiscussion = isDiscussionPhase();
+
+    // Update stage indicator
+    if (elements.stageIndicator) {
+        if (inStage2) {
+            elements.stageIndicator.textContent = '[Stage 2: The Discussion Era]';
+            elements.stageIndicator.classList.add('stage2');
+        } else {
+            elements.stageIndicator.textContent = '[Stage 1: The Reading Years]';
+            elements.stageIndicator.classList.remove('stage2');
+        }
+    }
+
+    // Update phase indicator (Stage 2 only)
+    if (elements.phaseIndicator) {
+        if (inStage2) {
+            elements.phaseIndicator.style.display = 'inline-block';
+            if (inDiscussion) {
+                elements.phaseIndicator.textContent = 'Discussion Phase';
+                elements.phaseIndicator.className = 'phase-indicator discussion';
+            } else {
+                elements.phaseIndicator.textContent = 'Reading Phase';
+                elements.phaseIndicator.className = 'phase-indicator reading';
+            }
+        } else {
+            elements.phaseIndicator.style.display = 'none';
+        }
+    }
+
+    // Update button text
+    if (inDiscussion) {
+        elements.readButton.textContent = 'DISCUSS';
+        elements.readButton.classList.add('discuss-mode');
+    } else {
+        elements.readButton.textContent = 'READ WORDS';
+        elements.readButton.classList.remove('discuss-mode');
+    }
+
+    // Update current book section styling
+    const currentBookSection = document.querySelector('.current-book');
+    if (currentBookSection) {
+        if (inDiscussion) {
+            currentBookSection.classList.add('discussion-mode');
+        } else {
+            currentBookSection.classList.remove('discussion-mode');
+        }
+    }
 
     // Update book title
     elements.bookTitle.textContent = `Current Book: #${currentBook.number} - ${currentBook.title}`;
@@ -548,11 +741,46 @@ function updateDisplay() {
     elements.wordsPerClick.textContent = formatNumber(gameState.wordsPerClick);
     elements.pagesPerSecond.textContent = formatNumber(calculatePagesPerSecond());
 
-    // Update book progress
-    const progress = Math.min((gameState.currentBookPages / currentBook.pages_required) * 100, 100);
-    elements.currentPages.textContent = Math.floor(Math.min(gameState.currentBookPages, currentBook.pages_required));
-    elements.requiredPages.textContent = currentBook.pages_required;
-    elements.bookProgress.style.width = progress + '%';
+    // Show/hide Stage 2 stats
+    if (elements.dpStat) {
+        elements.dpStat.style.display = inStage2 ? 'block' : 'none';
+    }
+    if (elements.engagementStat) {
+        elements.engagementStat.style.display = inStage2 ? 'block' : 'none';
+    }
+    if (elements.discussionPointsDisplay) {
+        elements.discussionPointsDisplay.textContent = formatNumber(Math.floor(gameState.discussionPoints));
+    }
+    if (elements.engagementDisplay) {
+        elements.engagementDisplay.textContent = gameState.engagement.toFixed(2);
+    }
+
+    // Update progress bars based on phase
+    if (inDiscussion) {
+        // Show discussion progress, hide reading progress
+        if (elements.readingProgressContainer) {
+            elements.readingProgressContainer.style.display = 'none';
+        }
+        if (elements.discussionProgressContainer) {
+            elements.discussionProgressContainer.style.display = 'block';
+            const discussionRequired = getDiscussionRequired();
+            const discussionProgress = Math.min((gameState.currentDiscussionProgress / discussionRequired) * 100, 100);
+            elements.discussionProgressBar.style.width = discussionProgress + '%';
+            elements.discussionProgressText.textContent = `${Math.floor(gameState.currentDiscussionProgress)}/${discussionRequired} discussion`;
+        }
+    } else {
+        // Show reading progress, hide discussion progress
+        if (elements.readingProgressContainer) {
+            elements.readingProgressContainer.style.display = 'block';
+            const progress = Math.min((gameState.currentBookPages / currentBook.pages_required) * 100, 100);
+            elements.currentPages.textContent = Math.floor(Math.min(gameState.currentBookPages, currentBook.pages_required));
+            elements.requiredPages.textContent = currentBook.pages_required;
+            elements.bookProgress.style.width = progress + '%';
+        }
+        if (elements.discussionProgressContainer) {
+            elements.discussionProgressContainer.style.display = 'none';
+        }
+    }
 
     // Update member recruit button states
     renderMembers();
@@ -592,8 +820,11 @@ function saveGame() {
                 upgrades: {},
                 passivePagesPerSecond: gameState.passivePagesPerSecond,
                 currentBookMultiplier: gameState.currentBookMultiplier,
+                bookPhase: gameState.bookPhase,
                 discussionPoints: gameState.discussionPoints,
                 discussionPointsPerClick: gameState.discussionPointsPerClick,
+                currentDiscussionProgress: gameState.currentDiscussionProgress,
+                engagement: gameState.engagement,
                 careerExpertRuleUnlocked: gameState.careerExpertRuleUnlocked,
                 greenlightUnlocked: gameState.greenlightUnlocked,
                 globalMultiplier: gameState.globalMultiplier,
@@ -659,8 +890,11 @@ function loadGame() {
         gameState.stage = saved.stage || 1;
         gameState.passivePagesPerSecond = saved.passivePagesPerSecond || 0;
         gameState.currentBookMultiplier = saved.currentBookMultiplier || 1;
+        gameState.bookPhase = saved.bookPhase || 'reading';
         gameState.discussionPoints = saved.discussionPoints || 0;
         gameState.discussionPointsPerClick = saved.discussionPointsPerClick || 1;
+        gameState.currentDiscussionProgress = saved.currentDiscussionProgress || 0;
+        gameState.engagement = saved.engagement || 1.0;
         gameState.careerExpertRuleUnlocked = saved.careerExpertRuleUnlocked || false;
         gameState.greenlightUnlocked = saved.greenlightUnlocked || false;
         gameState.globalMultiplier = saved.globalMultiplier || 1.0;
@@ -711,27 +945,40 @@ function gameLoop() {
     const deltaTime = (now - lastTime) / 1000; // Convert to seconds
     lastTime = now;
 
-    // Add passive pages from members and upgrades
+    // Don't do anything if all books complete
+    if (isAllBooksComplete()) {
+        return;
+    }
+
+    // In Stage 2 Discussion Phase, members don't generate pages
+    // (The book has been read, now we're discussing)
+    if (isDiscussionPhase()) {
+        // Future: Group Chat upgrade could generate passive DP here
+        return;
+    }
+
+    // Stage 1 or Stage 2 Reading Phase: Add passive pages from members and upgrades
     const pps = calculatePagesPerSecond();
     if (pps > 0) {
         const pagesGained = pps * deltaTime;
         gameState.totalWords += pagesGained * WORDS_PER_PAGE;
         gameState.totalPages = calculatePages(gameState.totalWords);
 
-        // Only accumulate book progress if Stage 1 is not complete
-        if (!isStage1Complete()) {
-            // Apply current book multiplier from Focused Reading
-            gameState.currentBookPages += pagesGained * gameState.currentBookMultiplier;
+        // Apply current book multiplier from Focused Reading
+        gameState.currentBookPages += pagesGained * gameState.currentBookMultiplier;
 
-            // Check for book completion
-            const currentBook = getCurrentBook();
-            if (gameState.currentBookPages >= currentBook.pages_required) {
-                completeBook();
+        // Check for book/phase completion
+        const currentBook = getCurrentBook();
+        if (gameState.currentBookPages >= currentBook.pages_required) {
+            if (isStage2()) {
+                // Stage 2: Transition to discussion phase
+                transitionToDiscussionPhase();
             } else {
-                // Only update stats, not full DOM rebuild
-                updateStatsDisplay();
+                // Stage 1: Complete the book
+                completeBook();
             }
         } else {
+            // Only update stats, not full DOM rebuild
             updateStatsDisplay();
         }
     }

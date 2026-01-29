@@ -228,5 +228,117 @@
     "special": "stage_transition",
     "career_expert": false,
     "note": "Career Expert Rule unlocked! (Malcolm is NOT an expert)"
+  },
+  {
+    "number": 26,
+    "title": "The Subtle Art of Not Giving a F*ck",
+    "author": "Mark Manson",
+    "category": "Growth",
+    "pages_required": 100,
+    "discussion_required": 50,
+    "controversy": "medium",
+    "special": null,
+    "note": "Welcome to Stage 2!"
+  },
+  {
+    "number": 27,
+    "title": "Bad Blood",
+    "author": "John Carreyrou",
+    "category": "Knowledge",
+    "pages_required": 120,
+    "discussion_required": 60,
+    "controversy": "high",
+    "special": null,
+    "note": "The Theranos saga"
+  },
+  {
+    "number": 28,
+    "title": "Where the Crawdads Sing",
+    "author": "Delia Owens",
+    "category": "Fiction",
+    "pages_required": 140,
+    "discussion_required": 70,
+    "controversy": "medium",
+    "special": null,
+    "note": "Marsh girl mystery"
+  },
+  {
+    "number": 29,
+    "title": "Becoming",
+    "author": "Michelle Obama",
+    "category": "Growth",
+    "pages_required": 160,
+    "discussion_required": 80,
+    "controversy": "low",
+    "special": null,
+    "note": "An inspiring journey"
+  },
+  {
+    "number": 30,
+    "title": "The Institute",
+    "author": "Stephen King",
+    "category": "Thriller",
+    "pages_required": 180,
+    "discussion_required": 90,
+    "controversy": "medium",
+    "special": null,
+    "note": "Classic King"
+  },
+  {
+    "number": 31,
+    "title": "Range",
+    "author": "David Epstein",
+    "category": "Knowledge",
+    "pages_required": 200,
+    "discussion_required": 100,
+    "controversy": "medium",
+    "career_expert": true,
+    "special": null,
+    "note": "Generalists triumph"
+  },
+  {
+    "number": 32,
+    "title": "Circe",
+    "author": "Madeline Miller",
+    "category": "Fiction",
+    "pages_required": 220,
+    "discussion_required": 110,
+    "controversy": "low",
+    "special": null,
+    "note": "Mythology reimagined"
+  },
+  {
+    "number": 33,
+    "title": "The Vanishing Half",
+    "author": "Brit Bennett",
+    "category": "Fiction",
+    "pages_required": 240,
+    "discussion_required": 120,
+    "controversy": "medium",
+    "special": null,
+    "note": "Identity and family"
+  },
+  {
+    "number": 34,
+    "title": "Thinking in Bets",
+    "author": "Annie Duke",
+    "category": "Knowledge",
+    "pages_required": 260,
+    "discussion_required": 130,
+    "controversy": "medium",
+    "career_expert": true,
+    "special": null,
+    "note": "Decisions under uncertainty"
+  },
+  {
+    "number": 35,
+    "title": "Mexican Gothic",
+    "author": "Silvia Moreno-Garcia",
+    "category": "Thriller",
+    "pages_required": 280,
+    "discussion_required": 140,
+    "controversy": "high",
+    "special": null,
+    "note": "Creepy and atmospheric"
   }
 ]
