@@ -3,7 +3,7 @@
 // Constants
 const WORDS_PER_PAGE = 250;
 const SAVE_KEY = 'bookClubClickerSave';
-const SAVE_VERSION = 2; // Bumped for Phase 7
+const SAVE_VERSION = 3; // Bumped for Phase 9 (Stage 2 Upgrades)
 const AUTO_SAVE_INTERVAL = 10000; // 10 seconds
 
 // Discussion Move Definitions
@@ -136,7 +136,7 @@ const gameState = {
     careerExpertRuleUnlocked: false,
     greenlightUnlocked: false,
 
-    // Upgrades
+    // Upgrades (Stage 1)
     upgrades: {
         speedReading: {
             name: 'Speed Reading',
@@ -164,6 +164,55 @@ const gameState = {
             costMultiplier: 1,
             maxLevel: 1,
             effect: 2
+        }
+    },
+
+    // Stage 2 Upgrades (cost DP)
+    stage2Upgrades: {
+        discussionGuide: {
+            name: 'Discussion Guide',
+            description: '+1 DP per click',
+            level: 0,
+            baseCost: 50,
+            costMultiplier: 2.5,
+            maxLevel: null,
+            effect: 1
+        },
+        betterWifi: {
+            name: 'Better Wifi',
+            description: 'Reduce Technical Difficulties event chance',
+            level: 0,
+            baseCost: 200,
+            costMultiplier: 1,
+            maxLevel: 1,
+            effect: 0.5
+        },
+        bookClubHistorian: {
+            name: 'Book Club Historian',
+            description: '"This reminds me of..." works on ALL books',
+            level: 0,
+            baseCost: 300,
+            costMultiplier: 1,
+            maxLevel: 1,
+            effect: true
+        },
+        hotTakeInsurance: {
+            name: 'Hot Take Insurance',
+            description: 'Hot Takes can never result in DP loss',
+            level: 0,
+            baseCost: 500,
+            costMultiplier: 1,
+            maxLevel: 1,
+            effect: true
+        },
+        theGroupChat: {
+            name: 'The Group Chat',
+            description: 'Members generate passive DP during discussions',
+            level: 0,
+            baseCost: 1000,
+            costMultiplier: 1,
+            maxLevel: 1,
+            effect: 0.1
         }
     },
 
@@ -568,45 +617,141 @@ function purchaseUpgrade(upgradeKey) {
     return true;
 }
 
-// Render upgrades section
+// Render upgrades section (Stage 1 or Stage 2 based on current stage)
 function renderUpgrades() {
     if (!elements.upgradesContainer) return;
 
-    const upgradeOrder = ['speedReading', 'readingHabit', 'focusedReading'];
     let html = '';
 
-    for (const key of upgradeOrder) {
-        const upgrade = gameState.upgrades[key];
-        const cost = calculateUpgradeCost(key);
-        const isMaxed = upgrade.maxLevel !== null && upgrade.level >= upgrade.maxLevel;
-        const canAfford = gameState.totalPages >= cost;
+    if (gameState.stage === 1) {
+        // Stage 1 upgrades
+        const upgradeOrder = ['speedReading', 'readingHabit', 'focusedReading'];
 
-        let rowClass = 'upgrade-row';
-        let levelText = '';
-        let costText = '';
+        for (const key of upgradeOrder) {
+            const upgrade = gameState.upgrades[key];
+            const cost = calculateUpgradeCost(key);
+            const isMaxed = upgrade.maxLevel !== null && upgrade.level >= upgrade.maxLevel;
+            const canAfford = gameState.totalPages >= cost;
 
-        if (isMaxed) {
-            rowClass += ' maxed';
-            levelText = '';
-            costText = '<span class="upgrade-cost owned">OWNED</span>';
-        } else {
-            rowClass += canAfford ? ' affordable' : ' unaffordable';
-            levelText = upgrade.maxLevel === null ? ` (Lv.${upgrade.level})` : '';
-            costText = `<span class="upgrade-cost ${canAfford ? '' : 'disabled'}">${formatNumber(cost)}p</span>`;
-        }
+            let rowClass = 'upgrade-row';
+            let levelText = '';
+            let costText = '';
 
-        html += `
-            <div class="${rowClass}" data-upgrade="${key}">
-                <div class="upgrade-info">
-                    <span class="upgrade-name">${upgrade.name}${levelText}</span>
-                    <span class="upgrade-desc">${upgrade.description}</span>
+            if (isMaxed) {
+                rowClass += ' maxed';
+                levelText = '';
+                costText = '<span class="upgrade-cost owned">OWNED</span>';
+            } else {
+                rowClass += canAfford ? ' affordable' : ' unaffordable';
+                levelText = upgrade.maxLevel === null ? ` (Lv.${upgrade.level})` : '';
+                costText = `<span class="upgrade-cost ${canAfford ? '' : 'disabled'}">${formatNumber(cost)}p</span>`;
+            }
+
+            html += `
+                <div class="${rowClass}" data-upgrade="${key}">
+                    <div class="upgrade-info">
+                        <span class="upgrade-name">${upgrade.name}${levelText}</span>
+                        <span class="upgrade-desc">${upgrade.description}</span>
+                    </div>
+                    ${costText}
                 </div>
-                ${costText}
-            </div>
-        `;
+            `;
+        }
+    } else {
+        // Stage 2 upgrades
+        const stage2Order = ['discussionGuide', 'betterWifi', 'bookClubHistorian', 'hotTakeInsurance', 'theGroupChat'];
+
+        for (const key of stage2Order) {
+            html += renderStage2UpgradeRow(key, gameState.stage2Upgrades[key]);
+        }
     }
 
     elements.upgradesContainer.innerHTML = html;
+}
+
+// Calculate current cost for a Stage 2 upgrade
+function calculateStage2UpgradeCost(upgradeKey) {
+    const upgrade = gameState.stage2Upgrades[upgradeKey];
+    return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.level));
+}
+
+// Render a single Stage 2 upgrade row
+function renderStage2UpgradeRow(key, upgrade) {
+    const cost = calculateStage2UpgradeCost(key);
+    const isMaxed = upgrade.maxLevel !== null && upgrade.level >= upgrade.maxLevel;
+    const canAfford = gameState.discussionPoints >= cost;
+
+    let rowClass = 'upgrade-row stage2-upgrade';
+    let levelText = '';
+    let costText = '';
+
+    if (isMaxed) {
+        rowClass += ' maxed';
+        levelText = '';
+        costText = '<span class="upgrade-cost owned">OWNED</span>';
+    } else {
+        rowClass += canAfford ? ' affordable' : ' unaffordable';
+        levelText = upgrade.maxLevel === null ? ` (Lv.${upgrade.level})` : '';
+        costText = `<span class="upgrade-cost ${canAfford ? '' : 'disabled'}">${formatNumber(cost)} DP</span>`;
+    }
+
+    return `
+        <div class="${rowClass}" data-stage2-upgrade="${key}">
+            <div class="upgrade-info">
+                <span class="upgrade-name">${upgrade.name}${levelText}</span>
+                <span class="upgrade-desc">${upgrade.description}</span>
+            </div>
+            ${costText}
+        </div>
+    `;
+}
+
+// Purchase a Stage 2 upgrade
+function purchaseStage2Upgrade(upgradeKey) {
+    const upgrade = gameState.stage2Upgrades[upgradeKey];
+
+    // Check if maxed
+    if (upgrade.maxLevel !== null && upgrade.level >= upgrade.maxLevel) {
+        return false;
+    }
+
+    const cost = calculateStage2UpgradeCost(upgradeKey);
+
+    // Check if can afford (DP currency)
+    if (gameState.discussionPoints < cost) {
+        showMessage('Not Enough DP', `You need ${formatNumber(cost)} Discussion Points for ${upgrade.name}.`, 'normal');
+        return false;
+    }
+
+    // Deduct DP
+    gameState.discussionPoints -= cost;
+
+    // Apply upgrade effect
+    upgrade.level++;
+
+    switch (upgradeKey) {
+        case 'discussionGuide':
+            gameState.discussionPointsPerClick += upgrade.effect;
+            showMessage('Upgrade!', `${upgrade.name}: +${upgrade.effect} DP per click!`, 'special');
+            break;
+        case 'betterWifi':
+            showMessage('Upgrade!', `${upgrade.name}: Technical Difficulties will be less frequent!`, 'special');
+            break;
+        case 'bookClubHistorian':
+            showMessage('Upgrade!', `${upgrade.name}: "This reminds me of..." now works with ALL books!`, 'special');
+            break;
+        case 'hotTakeInsurance':
+            showMessage('Upgrade!', `${upgrade.name}: Hot Takes are now risk-free!`, 'special');
+            break;
+        case 'theGroupChat':
+            showMessage('Upgrade!', `${upgrade.name}: Members now generate passive DP during discussions!`, 'special');
+            break;
+    }
+
+    renderUpgrades();
+    updateDisplay();
+    saveGame();
+    return true;
 }
 
 // Get move modifiers based on member bonuses
@@ -748,7 +893,7 @@ function executeMove(moveKey) {
     return true;
 }
 
-// Hot Take: 70% success for 2x, 30% fail for -25%
+// Hot Take: 40% success for 2x, 60% fail for -25% (unless insured)
 function executeHotTake(move, modifiers) {
     const successRate = move.successRate + modifiers.successBonus;
     const roll = Math.random();
@@ -759,10 +904,16 @@ function executeHotTake(move, modifiers) {
         gameState.currentDiscussionProgress += bonus;
         showMessage('Hot Take Success!', `Your bold opinion landed perfectly!<br><em>+${Math.floor(bonus)} discussion progress</em>`, 'special');
     } else {
-        // Fail - lose 25% of cost from DP pool
-        const penalty = Math.floor(move.cost * move.failPenalty);
-        gameState.discussionPoints = Math.max(0, gameState.discussionPoints - penalty);
-        showMessage('Hot Take Backfired!', `That opinion was too spicy...<br><em>-${penalty} DP</em>`, 'normal');
+        // Fail
+        if (gameState.stage2Upgrades.hotTakeInsurance.level > 0) {
+            // Insurance: no DP loss, just no progress
+            showMessage('Hot Take Missed!', `That opinion didn't land...<br><em>Insurance protected your DP!</em>`, 'normal');
+        } else {
+            // Original penalty - lose 25% of cost from DP pool
+            const penalty = Math.floor(move.cost * move.failPenalty);
+            gameState.discussionPoints = Math.max(0, gameState.discussionPoints - penalty);
+            showMessage('Hot Take Backfired!', `That opinion was too spicy...<br><em>-${penalty} DP</em>`, 'normal');
+        }
     }
 }
 
@@ -829,9 +980,15 @@ function showBookSelector() {
 
     gameState.showingBookSelector = true;
 
-    // Get completed Stage 2 books (excluding current)
+    // Determine minimum book number based on Historian upgrade
+    let minBookNumber = 26; // Default: Stage 2 books only
+    if (gameState.stage2Upgrades.bookClubHistorian.level > 0) {
+        minBookNumber = 1; // Historian: All books
+    }
+
+    // Get completed books (excluding current)
     const completedBooks = gameState.booksCompleted
-        .filter(num => num > 25 && num < getCurrentBook().number)
+        .filter(num => num >= minBookNumber && num < getCurrentBook().number)
         .sort((a, b) => a - b);
 
     if (completedBooks.length === 0) {
@@ -1286,6 +1443,14 @@ function saveGame() {
             };
         }
 
+        // Save Stage 2 upgrade states
+        saveData.gameState.stage2Upgrades = {};
+        for (const [key, upgrade] of Object.entries(gameState.stage2Upgrades)) {
+            saveData.gameState.stage2Upgrades[key] = {
+                level: upgrade.level
+            };
+        }
+
         localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
         gameState.lastSaveTime = Date.now();
         console.log('Game saved');
@@ -1362,6 +1527,21 @@ function loadGame() {
             }
         }
 
+        // Restore Stage 2 upgrade states
+        if (saved.stage2Upgrades) {
+            for (const [key, upgradeData] of Object.entries(saved.stage2Upgrades)) {
+                if (gameState.stage2Upgrades[key]) {
+                    gameState.stage2Upgrades[key].level = upgradeData.level || 0;
+                }
+            }
+        }
+
+        // Recompute discussionPointsPerClick from Discussion Guide level
+        const guideLevel = gameState.stage2Upgrades.discussionGuide.level;
+        if (guideLevel > 0) {
+            gameState.discussionPointsPerClick = 1 + guideLevel;
+        }
+
         // No offline progress - game only progresses when tab is active
 
         console.log('Game loaded successfully');
@@ -1393,7 +1573,22 @@ function gameLoop() {
     // In Stage 2 Discussion Phase, members don't generate pages
     // (The book has been read, now we're discussing)
     if (isDiscussionPhase()) {
-        // Future: Group Chat upgrade could generate passive DP here
+        // Group Chat upgrade: members generate passive DP
+        if (gameState.stage2Upgrades.theGroupChat.level > 0) {
+            const unlockedMembers = Object.values(gameState.members).filter(m => m.unlocked).length;
+
+            // Base: 0.1 DP per second, plus 0.1 per unlocked member, multiplied by engagement
+            // (You're always in the group chat, members add to it)
+            let dpRate = gameState.stage2Upgrades.theGroupChat.effect * (1 + unlockedMembers) * gameState.engagement;
+
+            // James bonus: +10% DP efficiency
+            if (gameState.members.james.unlocked) {
+                dpRate *= 1.1;
+            }
+
+            gameState.discussionPoints += dpRate * deltaTime;
+            updateStatsDisplay();
+        }
         return;
     }
 
@@ -1449,10 +1644,19 @@ async function init() {
 
     // Set up event delegation for upgrades container (click handlers attached once)
     elements.upgradesContainer.addEventListener('click', (e) => {
-        const row = e.target.closest('.upgrade-row.affordable');
-        if (row) {
-            const upgradeKey = row.dataset.upgrade;
+        // Stage 1 upgrades
+        const stage1Row = e.target.closest('.upgrade-row.affordable:not(.stage2-upgrade)');
+        if (stage1Row) {
+            const upgradeKey = stage1Row.dataset.upgrade;
             purchaseUpgrade(upgradeKey);
+            return;
+        }
+
+        // Stage 2 upgrades
+        const stage2Row = e.target.closest('.upgrade-row.stage2-upgrade.affordable');
+        if (stage2Row) {
+            const upgradeKey = stage2Row.dataset.stage2Upgrade;
+            purchaseStage2Upgrade(upgradeKey);
         }
     });
 

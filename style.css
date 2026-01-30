@@ -982,6 +982,33 @@ section h2 {
     background: #c4b8a8;
 }
 
+/* Stage 2 Upgrades */
+.upgrade-row.stage2-upgrade {
+    border-left: 3px solid var(--burgundy);
+}
+
+.upgrade-row.stage2-upgrade.affordable {
+    background: rgba(114, 47, 55, 0.03);
+}
+
+.upgrade-row.stage2-upgrade.affordable:hover {
+    background: rgba(114, 47, 55, 0.1);
+    border-color: var(--burgundy);
+}
+
+.upgrade-row.stage2-upgrade .upgrade-cost {
+    background: var(--burgundy);
+}
+
+.upgrade-row.stage2-upgrade.maxed {
+    background: rgba(114, 47, 55, 0.05);
+    border-color: var(--burgundy);
+}
+
+.upgrade-row.stage2-upgrade.maxed .upgrade-name {
+    color: var(--burgundy);
+}
+
 /* Dev Tools (remove before release) */
 .dev-tools {
     margin-top: 40px;

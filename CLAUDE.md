@@ -133,14 +133,14 @@ Each book has hidden Discussion Potential:
 | High | Volatile. Hot Takes more effective but riskier. |
 | Maximum | Everyone has opinions. Tons of DP, chaos. |
 
-### Stage 2 Upgrades
-| Upgrade | Effect | Base Cost |
-|---------|--------|-----------|
-| Better Wifi | Reduce "Technical Difficulties" chance | 500p |
-| Discussion Guide | +1 DP per click | 1000p |
-| Book Club Historian | "This reminds me of..." unlocks earlier | 750p |
-| Hot Take Insurance | Hot Takes can't go below 0% return | 2000p |
-| The Group Chat | Members generate DP passively between meetings | 5000p |
+### Stage 2 Upgrades (Cost DP, not pages)
+| Upgrade | Effect | Base Cost | Max Level |
+|---------|--------|-----------|-----------|
+| Discussion Guide | +1 DP per click | 50 DP | Unlimited (2.5x scaling) |
+| Better Wifi | Reduce "Technical Difficulties" chance | 200 DP | 1 |
+| Book Club Historian | "This reminds me of..." works on ALL books | 300 DP | 1 |
+| Hot Take Insurance | Hot Takes can never result in DP loss | 500 DP | 1 |
+| The Group Chat | Members generate passive DP during discussions | 1000 DP | 1 |
 
 ---
 
@@ -197,13 +197,13 @@ Each book has hidden Discussion Potential:
   - Winslow: Connector ("This reminds me of..." bonus 2x)
   - Member bonuses apply during discussion phase
 
-- [ ] **Phase 9: Stage 2 Upgrades**
-  - New upgrade panel for Stage 2
-  - Better Wifi (reduce Technical Difficulties chance)
-  - Discussion Guide (+1 DP per click)
-  - Book Club Historian ("This reminds me of..." unlocks earlier)
-  - Hot Take Insurance (Hot Takes can't go below 0% return)
-  - The Group Chat (members generate DP passively)
+- [x] **Phase 9: Stage 2 Upgrades**
+  - Stage 2 upgrades cost Discussion Points (DP)
+  - Discussion Guide (+1 DP per click, repeatable)
+  - Better Wifi (placeholder for Phase 10 events)
+  - Book Club Historian ("This reminds me of..." works on ALL books)
+  - Hot Take Insurance (Hot Takes can't result in DP loss)
+  - The Group Chat (members generate passive DP during discussions)
 
 - [ ] **Phase 10: Events System**
   - Random event triggers during discussions
