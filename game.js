@@ -2809,7 +2809,7 @@ function gameLoop() {
             return;
         }
 
-        // Group Chat upgrade: members generate passive DP
+        // Group Chat upgrade: members generate passive DP and discussion progress
         if (gameState.stage2Upgrades.theGroupChat.level > 0) {
             // Count unlocked members, excluding disabled member from Schedule Conflict
             let unlockedMembers = Object.entries(gameState.members)
@@ -2827,8 +2827,19 @@ function gameLoop() {
                 dpRate *= 1.1;
             }
 
-            gameState.discussionPoints += dpRate * deltaTime;
-            updateStatsDisplay();
+            const passiveGain = dpRate * deltaTime;
+            gameState.discussionPoints += passiveGain;
+
+            // Also add to discussion progress (enables AFK completion)
+            gameState.currentDiscussionProgress += passiveGain;
+
+            // Check for discussion completion
+            const discussionRequired = getDiscussionRequired();
+            if (gameState.currentDiscussionProgress >= discussionRequired) {
+                completeDiscussion();
+            } else {
+                updateStatsDisplay();
+            }
         }
         return;
     }
