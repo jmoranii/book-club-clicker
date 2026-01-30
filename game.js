@@ -1755,7 +1755,7 @@ function showVictoryScreen() {
             </div>
 
             <div class="victory-actions">
-                <button class="victory-btn victory-btn-primary" onclick="closeVictoryScreen()">Continue</button>
+                <button class="victory-btn victory-btn-primary" onclick="startOverFromVictory()">Start Over</button>
             </div>
         </div>
     `;
@@ -1843,6 +1843,15 @@ function closeVictoryScreen() {
     if (overlay) {
         overlay.classList.remove('show');
         setTimeout(() => overlay.remove(), 500);
+    }
+}
+
+function startOverFromVictory() {
+    if (confirm('Start a new game? All progress will be reset.')) {
+        // Clear all saved data
+        localStorage.removeItem(SAVE_KEY);
+        // Reload the page to start fresh
+        location.reload();
     }
 }
 
