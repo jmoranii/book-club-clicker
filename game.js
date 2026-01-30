@@ -1762,6 +1762,80 @@ function showVictoryScreen() {
 
     document.body.appendChild(overlay);
     setTimeout(() => overlay.classList.add('show'), 10);
+
+    // Start the celebration!
+    startVictoryCelebration(overlay);
+}
+
+// Celebration emoji rain effect
+function startVictoryCelebration(container) {
+    const celebrationEmojis = ['📖', '📚', '🎉', '🎊', '🥳', '👏', '⭐', '✨', '🏆', '🎈', '💫', '🌟'];
+    const duration = 8000; // 8 seconds of celebration
+    const spawnInterval = 100; // New emoji every 100ms
+    let elapsed = 0;
+
+    // Create celebration container
+    const celebrationLayer = document.createElement('div');
+    celebrationLayer.className = 'victory-celebration';
+    container.appendChild(celebrationLayer);
+
+    // Spawn emojis at intervals
+    const spawner = setInterval(() => {
+        elapsed += spawnInterval;
+
+        // Spawn 2-3 emojis per interval for more density
+        const count = Math.random() > 0.5 ? 3 : 2;
+        for (let i = 0; i < count; i++) {
+            spawnCelebrationEmoji(celebrationLayer, celebrationEmojis);
+        }
+
+        // Slow down spawning toward the end
+        if (elapsed > duration * 0.7) {
+            if (Math.random() > 0.5) return; // Skip some spawns
+        }
+
+        if (elapsed >= duration) {
+            clearInterval(spawner);
+            // Fade out the celebration layer
+            celebrationLayer.style.opacity = '0';
+            setTimeout(() => celebrationLayer.remove(), 1000);
+        }
+    }, spawnInterval);
+}
+
+function spawnCelebrationEmoji(container, emojis) {
+    const emoji = document.createElement('div');
+    emoji.className = 'celebration-emoji';
+    emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+
+    // Random horizontal position
+    const startX = Math.random() * 100;
+    emoji.style.left = `${startX}%`;
+
+    // Random size variation
+    const size = 1 + Math.random() * 1.5; // 1x to 2.5x
+    emoji.style.fontSize = `${size}rem`;
+
+    // Random fall duration (2-4 seconds)
+    const fallDuration = 2 + Math.random() * 2;
+    emoji.style.animationDuration = `${fallDuration}s`;
+
+    // Random horizontal drift
+    const drift = (Math.random() - 0.5) * 100;
+    emoji.style.setProperty('--drift', `${drift}px`);
+
+    // Random rotation
+    const rotation = (Math.random() - 0.5) * 720;
+    emoji.style.setProperty('--rotation', `${rotation}deg`);
+
+    // Random delay for staggered effect
+    const delay = Math.random() * 0.3;
+    emoji.style.animationDelay = `${delay}s`;
+
+    container.appendChild(emoji);
+
+    // Remove after animation completes
+    setTimeout(() => emoji.remove(), (fallDuration + delay) * 1000 + 500);
 }
 
 function closeVictoryScreen() {

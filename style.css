@@ -1720,6 +1720,50 @@ section h2 {
     margin-top: 5px;
 }
 
+/* Victory Celebration - Falling Emojis */
+.victory-celebration {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 10;
+    transition: opacity 1s ease;
+}
+
+.celebration-emoji {
+    position: absolute;
+    top: -50px;
+    animation: emojiRain linear forwards;
+    opacity: 0.9;
+    z-index: 10;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    will-change: transform, opacity;
+}
+
+@keyframes emojiRain {
+    0% {
+        transform: translateY(0) translateX(0) rotate(0deg) scale(0.5);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+        transform: translateY(10vh) translateX(calc(var(--drift) * 0.2)) rotate(calc(var(--rotation) * 0.2)) scale(1);
+    }
+    50% {
+        opacity: 0.9;
+    }
+    85% {
+        opacity: 0.6;
+    }
+    100% {
+        transform: translateY(calc(100vh + 50px)) translateX(var(--drift)) rotate(var(--rotation)) scale(0.7);
+        opacity: 0;
+    }
+}
+
 /* Victory Messages */
 .forward-message {
     font-family: 'Libre Baskerville', Georgia, serif;
