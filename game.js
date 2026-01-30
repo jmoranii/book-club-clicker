@@ -631,14 +631,6 @@ function getDiscussionRequired() {
 function transitionToDiscussionPhase() {
     gameState.bookPhase = 'discussion';
     gameState.currentDiscussionProgress = 0;
-
-    const book = getCurrentBook();
-    showMessage(
-        'Ready to Discuss!',
-        `"${book.title}" - The book club has finished reading.<br><em>Click to facilitate the discussion!</em>`,
-        'member'
-    );
-
     updateDisplay();
 }
 
