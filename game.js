@@ -32,7 +32,7 @@ const DISCUSSION_MOVES = {
     devilsAdvocate: {
         name: "Devil's Advocate",
         cost: 60,
-        description: 'Spark debate, generate more DP',
+        description: 'Spark debate, generate discussion points',
         dpGenerated: 40,
         progressBonus: 1.2
     },
@@ -147,7 +147,7 @@ const DISCUSSION_EVENTS = {
         name: 'Green Light Moment',
         type: 'greenlight',
         messageTitle: 'GREEN LIGHT',
-        messageText: 'good vibes boost — 1.5x DP for 30 seconds',
+        messageText: 'good vibes boost — 1.5x discussion points for 30 seconds',
         effect: 'greenlightBoost',
         effectValue: 1.5,
         baseProbability: 0.08,
@@ -455,11 +455,11 @@ const gameState = {
         }
     },
 
-    // Stage 2 Upgrades (cost DP)
+    // Stage 2 Upgrades (cost discussion points)
     stage2Upgrades: {
         discussionGuide: {
             name: 'Discussion Guide',
-            description: '+1 DP per click',
+            description: '+1 discussion point per click',
             level: 0,
             baseCost: 50,
             costMultiplier: 2.5,
@@ -486,7 +486,7 @@ const gameState = {
         },
         hotTakeInsurance: {
             name: 'Hot Take Insurance',
-            description: 'Hot Takes can never result in DP loss',
+            description: 'Hot Takes can never result in discussion point loss',
             level: 0,
             baseCost: 500,
             costMultiplier: 1,
@@ -495,7 +495,7 @@ const gameState = {
         },
         theGroupChat: {
             name: 'The Group Chat',
-            description: 'Members generate passive DP during discussions',
+            description: 'Members generate passive discussion points',
             level: 0,
             baseCost: 1000,
             costMultiplier: 1,
@@ -538,11 +538,9 @@ const elements = {
     discussionPointsDisplay: null,
     discussionProgressBar: null,
     discussionProgressText: null,
-    engagementDisplay: null,
     readingProgressContainer: null,
     discussionProgressContainer: null,
     dpStat: null,
-    engagementStat: null,
     // Discussion moves elements
     movesSection: null,
     movesContainer: null,
@@ -556,8 +554,7 @@ function initElements() {
     elements.totalWords = document.getElementById('total-words');
     elements.totalPages = document.getElementById('total-pages');
     elements.booksCompleted = document.getElementById('books-completed');
-    elements.wordsPerClick = document.getElementById('words-per-click');
-    elements.pagesPerSecond = document.getElementById('pages-per-second');
+    elements.clickStats = document.getElementById('click-stats');
     elements.currentPages = document.getElementById('current-pages');
     elements.requiredPages = document.getElementById('required-pages');
     elements.bookProgress = document.getElementById('book-progress');
@@ -571,11 +568,9 @@ function initElements() {
     elements.discussionPointsDisplay = document.getElementById('discussion-points');
     elements.discussionProgressBar = document.getElementById('discussion-progress');
     elements.discussionProgressText = document.getElementById('discussion-progress-text');
-    elements.engagementDisplay = document.getElementById('engagement-display');
     elements.readingProgressContainer = document.getElementById('reading-progress-container');
     elements.discussionProgressContainer = document.getElementById('discussion-progress-container');
     elements.dpStat = document.getElementById('dp-stat');
-    elements.engagementStat = document.getElementById('engagement-stat');
     // Discussion moves elements
     elements.movesSection = document.getElementById('moves-section');
     elements.movesContainer = document.getElementById('moves-container');
@@ -783,6 +778,48 @@ function calculatePagesPerSecond() {
     return pps * gameState.globalMultiplier;
 }
 
+// Calculate discussion points per second (from Group Chat upgrade)
+function calculateDiscussionPointsPerSecond() {
+    if (gameState.stage2Upgrades.theGroupChat.level === 0) {
+        return 0;
+    }
+
+    let unlockedMembers = Object.entries(gameState.members)
+        .filter(([key, m]) => m.unlocked && key !== gameState.events.activeEffects.memberDisabled)
+        .length;
+
+    let dpRate = gameState.stage2Upgrades.theGroupChat.effect * (1 + unlockedMembers) * gameState.engagement;
+    dpRate *= gameState.events.activeEffects.dpMultiplier;
+
+    if (gameState.members.james.unlocked && gameState.events.activeEffects.memberDisabled !== 'james') {
+        dpRate *= 1.1;
+    }
+
+    return dpRate;
+}
+
+// Render click stats based on current phase
+function renderClickStats() {
+    if (!elements.clickStats) return;
+
+    if (isDiscussionPhase()) {
+        // Discussion phase: show discussion points per click, discussion points per second, engagement
+        const dpPerClick = gameState.discussionPointsPerClick * gameState.engagement;
+        const dpPerSecond = calculateDiscussionPointsPerSecond();
+        elements.clickStats.innerHTML = `
+            <div>Discussion points per click: ${formatNumber(dpPerClick.toFixed(1))}</div>
+            <div>Discussion points per second: ${formatNumber(dpPerSecond.toFixed(1))}</div>
+            <div>Engagement: ${gameState.engagement.toFixed(2)}x</div>
+        `;
+    } else {
+        // Reading phase (Stage 1 or Stage 2 reading): show words per click, pages per second
+        elements.clickStats.innerHTML = `
+            <div>Words per click: ${formatNumber(gameState.wordsPerClick)}</div>
+            <div>Pages per second: ${formatNumber(calculatePagesPerSecond())}</div>
+        `;
+    }
+}
+
 // Check if any members should become available after book completion
 function checkMemberUnlocks() {
     const booksCompleted = gameState.booksCompleted.length;
@@ -796,7 +833,7 @@ function checkMemberUnlocks() {
             if (member.triggersStage2) {
                 costText = 'Ready to talk!';
             } else if (member.isStage2Member) {
-                costText = `Cost: ${member.recruitCost} DP`;
+                costText = `Cost: ${member.recruitCost} discussion points`;
             } else {
                 costText = `Cost: ${member.recruitCost} pages`;
             }
@@ -823,7 +860,7 @@ function recruitMember(memberKey) {
     // Stage 2 members cost DP, core members cost pages
     if (member.isStage2Member) {
         if (gameState.discussionPoints < member.recruitCost) {
-            showMessage('Not Enough DP', `You need ${member.recruitCost} DP to recruit ${member.name}.`, 'normal');
+            showMessage('Not Enough Discussion Points', `You need ${member.recruitCost} discussion points to recruit ${member.name}.`, 'normal');
             return false;
         }
         // Deduct DP
@@ -927,7 +964,7 @@ function renderMembers() {
             if (isStage2Member) {
                 const canAfford = gameState.discussionPoints >= member.recruitCost;
                 const btnClass = canAfford ? 'recruit-btn' : 'recruit-btn disabled';
-                action = `<button class="${btnClass}" data-member="${key}">Recruit: ${member.recruitCost} DP</button>`;
+                action = `<button class="${btnClass}" data-member="${key}">Recruit: ${member.recruitCost} discussion points</button>`;
             } else if (member.triggersStage2) {
                 // Special button text for Kyle (triggers Stage 2)
                 action = `<button class="recruit-btn stage2-trigger" data-member="${key}">Get Talking</button>`;
@@ -1082,7 +1119,7 @@ function renderStage2UpgradeRow(key, upgrade) {
     } else {
         rowClass += canAfford ? ' affordable' : ' unaffordable';
         levelText = upgrade.maxLevel === null ? ` (Lv.${upgrade.level})` : '';
-        costText = `<span class="upgrade-cost ${canAfford ? '' : 'disabled'}">${formatNumber(cost)} DP</span>`;
+        costText = `<span class="upgrade-cost ${canAfford ? '' : 'disabled'}">${formatNumber(cost)} discussion points</span>`;
     }
 
     return `
@@ -1109,7 +1146,7 @@ function purchaseStage2Upgrade(upgradeKey) {
 
     // Check if can afford (DP currency)
     if (gameState.discussionPoints < cost) {
-        showMessage('Not Enough DP', `You need ${formatNumber(cost)} Discussion Points for ${upgrade.name}.`, 'normal');
+        showMessage('Not Enough Discussion Points', `You need ${formatNumber(cost)} discussion points for ${upgrade.name}.`, 'normal');
         return false;
     }
 
@@ -1122,7 +1159,7 @@ function purchaseStage2Upgrade(upgradeKey) {
     switch (upgradeKey) {
         case 'discussionGuide':
             gameState.discussionPointsPerClick += upgrade.effect;
-            showMessage('Upgrade!', `${upgrade.name}: +${upgrade.effect} DP per click!`, 'special');
+            showMessage('Upgrade!', `${upgrade.name}: +${upgrade.effect} discussion point per click!`, 'special');
             break;
         case 'betterWifi':
             showMessage('Upgrade!', `${upgrade.name}: Technical Difficulties will be less frequent!`, 'special');
@@ -1134,7 +1171,7 @@ function purchaseStage2Upgrade(upgradeKey) {
             showMessage('Upgrade!', `${upgrade.name}: Hot Takes are now risk-free!`, 'special');
             break;
         case 'theGroupChat':
-            showMessage('Upgrade!', `${upgrade.name}: Members now generate passive DP during discussions!`, 'special');
+            showMessage('Upgrade!', `${upgrade.name}: Members now generate passive discussion points during discussions!`, 'special');
             break;
     }
 
@@ -1212,12 +1249,12 @@ function renderMoves() {
         }
 
         const costClass = actualCost === 0 ? 'move-cost free' : 'move-cost';
-        const costText = actualCost === 0 ? 'FREE' : `${actualCost} DP`;
+        const costText = actualCost === 0 ? 'FREE' : `${actualCost} disc. pts`;
 
         // Show original cost strikethrough if discounted
         let costDisplay = costText;
         if (modifiers.costMultiplier < 1.0 && move.cost > 0) {
-            costDisplay = `<s>${move.cost}</s> ${actualCost} DP`;
+            costDisplay = `<s>${move.cost}</s> ${actualCost} disc. pts`;
         }
 
         const bonusHtml = modifiers.bonusText ?
@@ -1244,7 +1281,7 @@ function executeMove(moveKey) {
 
     // Check if can afford
     if (gameState.discussionPoints < cost) {
-        showMessage('Not Enough DP', `You need ${cost} Discussion Points for ${move.name}.`, 'normal');
+        showMessage('Not Enough Discussion Points', `You need ${cost} discussion points for ${move.name}.`, 'normal');
         return false;
     }
 
@@ -1296,13 +1333,13 @@ function executeHotTake(move, modifiers) {
     } else {
         // Fail
         if (gameState.stage2Upgrades.hotTakeInsurance.level > 0) {
-            // Insurance: no DP loss, just no progress
-            showMessage('Hot Take Missed!', `That opinion didn't land...<br><em>Insurance protected your DP!</em>`, 'normal');
+            // Insurance: no discussion points loss, just no progress
+            showMessage('Hot Take Missed!', `That opinion didn't land...<br><em>Insurance protected your discussion points!</em>`, 'normal');
         } else {
-            // Original penalty - lose 25% of cost from DP pool
+            // Original penalty - lose 25% of cost from discussion points pool
             const penalty = Math.floor(move.cost * move.failPenalty);
             gameState.discussionPoints = Math.max(0, gameState.discussionPoints - penalty);
-            showMessage('Hot Take Backfired!', `That opinion was too spicy...<br><em>-${penalty} DP</em>`, 'normal');
+            showMessage('Hot Take Backfired!', `That opinion was too spicy...<br><em>-${penalty} discussion points</em>`, 'normal');
         }
     }
 }
@@ -1346,7 +1383,7 @@ function executeDevilsAdvocate(move, modifiers) {
     const progress = move.cost * move.progressBonus;
     gameState.currentDiscussionProgress += progress;
 
-    let message = `Stirring the pot!<br><em>+${dpGenerated} DP, +${Math.floor(progress)} progress</em>`;
+    let message = `Stirring the pot!<br><em>+${dpGenerated} discussion points, +${Math.floor(progress)} progress</em>`;
     if (currentBook.controversy === 'high') {
         message += '<br><em>Controversy bonus!</em>';
     }
@@ -1361,7 +1398,7 @@ function executeDidntFinish(move, modifiers) {
     // Apply penalty for next N clicks
     gameState.didntFinishPenalty = move.penaltyDuration;
 
-    showMessage('"I didn\'t finish it..."', `Honesty is... something.<br><em>+${move.progressBonus} progress, but -50% DP for ${move.penaltyDuration} clicks</em>`, 'normal');
+    showMessage('"I didn\'t finish it..."', `Honesty is... something.<br><em>+${move.progressBonus} progress, but -50% discussion points for ${move.penaltyDuration} clicks</em>`, 'normal');
 }
 
 // Show book selector for "Reminds Me" move
@@ -1411,7 +1448,7 @@ function executeRemindsMe(selectedBookNum) {
 
     // Deduct cost
     if (gameState.discussionPoints < cost) {
-        showMessage('Not Enough DP', `You need ${cost} Discussion Points.`, 'normal');
+        showMessage('Not Enough Discussion Points', `You need ${cost} discussion points.`, 'normal');
         hideBookSelector();
         return;
     }
@@ -1618,13 +1655,13 @@ function executePauseDiscussion(event) {
     }, event.effectValue * 1000);
 }
 
-// The Tangent - costs DP to refocus (James prevents entirely)
+// The Tangent - costs discussion points to refocus (James prevents entirely)
 function executeTangent(event) {
     gameState.events.activeEffects.tangentRefocusCost = event.effectValue;
 
     showMessage(
         event.messageTitle,
-        `${event.messageText}<br><em>Click to refocus: -${event.effectValue} DP</em>`,
+        `${event.messageText}<br><em>Click to refocus: -${event.effectValue} discussion points</em>`,
         'event-negative'
     );
 }
@@ -1738,14 +1775,14 @@ function executeInPersonMeetup(event) {
 
     showMessage(
         event.messageTitle,
-        `${event.messageText}<br><em>3x DP generation this book!</em>${specialNote}`,
+        `${event.messageText}<br><em>3x discussion point generation this book!</em>${specialNote}`,
         'event-special'
     );
 
     updateDisplay();
 }
 
-// GREEN LIGHT Boost - temporary 1.5x DP multiplier (Phase 12)
+// GREEN LIGHT Boost - temporary 1.5x discussion points multiplier (Phase 12)
 function executeGreenlightBoost(event) {
     const originalMultiplier = gameState.events.activeEffects.dpMultiplier;
     gameState.events.activeEffects.dpMultiplier *= event.effectValue;
@@ -1754,7 +1791,7 @@ function executeGreenlightBoost(event) {
 
     showMessage(
         event.messageTitle,
-        `${quote}<br><em>${event.effectValue}x DP for 30 seconds!</em>`,
+        `${quote}<br><em>${event.effectValue}x discussion points for 30 seconds!</em>`,
         'greenlight'
     );
 
@@ -1940,7 +1977,7 @@ function showVictoryScreen() {
                     </div>
                     <div class="victory-stat">
                         <span class="victory-stat-value">${formatNumber(stats.discussionPoints)}</span>
-                        <span class="victory-stat-label">DP Earned</span>
+                        <span class="victory-stat-label">Discussion Points</span>
                     </div>
                     <div class="victory-stat">
                         <span class="victory-stat-value">${playtimeStr}</span>
@@ -2221,7 +2258,7 @@ function handleSpecialBook(book) {
             setTimeout(() => {
                 showMessage(
                     'Achievement: "We Finished It Anyway"',
-                    '+50% engagement, +500 DP<br><em>For surviving the most controversial book.</em>',
+                    '+50% engagement, +500 discussion points<br><em>For surviving the most controversial book.</em>',
                     'special'
                 );
             }, 2000);
@@ -2288,10 +2325,10 @@ function handleReadClick() {
             if (gameState.discussionPoints >= cost) {
                 gameState.discussionPoints -= cost;
                 gameState.events.activeEffects.tangentRefocusCost = 0;
-                showMessage('Refocused!', `The discussion is back on track. (-${cost} DP)`, 'normal');
+                showMessage('Refocused!', `The discussion is back on track. (-${cost} discussion points)`, 'normal');
                 updateDisplay();
             } else {
-                showMessage('Not Enough DP', `You need ${cost} DP to refocus the tangent.`, 'normal');
+                showMessage('Not Enough Discussion Points', `You need ${cost} discussion points to refocus the tangent.`, 'normal');
             }
             return;
         }
@@ -2367,14 +2404,11 @@ function updateStatsDisplay() {
     elements.totalPages.textContent = formatNumber(gameState.totalPages);
 
     // Update click stats
-    elements.pagesPerSecond.textContent = formatNumber(calculatePagesPerSecond());
+    renderClickStats();
 
     // Update Stage 2 stats if visible
     if (elements.discussionPointsDisplay && isStage2()) {
         elements.discussionPointsDisplay.textContent = formatNumber(Math.floor(gameState.discussionPoints));
-    }
-    if (elements.engagementDisplay && isStage2()) {
-        elements.engagementDisplay.textContent = gameState.engagement.toFixed(2);
     }
 
     // Update progress based on current phase
@@ -2461,21 +2495,14 @@ function updateDisplay() {
     elements.booksCompleted.textContent = gameState.booksCompleted.length;
 
     // Update click stats
-    elements.wordsPerClick.textContent = formatNumber(gameState.wordsPerClick);
-    elements.pagesPerSecond.textContent = formatNumber(calculatePagesPerSecond());
+    renderClickStats();
 
     // Show/hide Stage 2 stats
     if (elements.dpStat) {
         elements.dpStat.style.display = inStage2 ? 'block' : 'none';
     }
-    if (elements.engagementStat) {
-        elements.engagementStat.style.display = inStage2 ? 'block' : 'none';
-    }
     if (elements.discussionPointsDisplay) {
         elements.discussionPointsDisplay.textContent = formatNumber(Math.floor(gameState.discussionPoints));
-    }
-    if (elements.engagementDisplay) {
-        elements.engagementDisplay.textContent = gameState.engagement.toFixed(2);
     }
 
     // Update progress bars based on phase
