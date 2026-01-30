@@ -770,21 +770,30 @@ function calculatePagesPerSecond() {
     return pps * gameState.globalMultiplier;
 }
 
-// Calculate discussion points per second (from Group Chat upgrade)
+// Calculate discussion points per second (from Group Chat upgrade + Stage 2 members)
 function calculateDiscussionPointsPerSecond() {
-    if (gameState.stage2Upgrades.theGroupChat.level === 0) {
-        return 0;
+    let dpRate = 0;
+
+    // Group Chat upgrade provides base passive DP generation
+    if (gameState.stage2Upgrades.theGroupChat.level > 0) {
+        let unlockedMembers = Object.entries(gameState.members)
+            .filter(([key, m]) => m.unlocked && key !== gameState.events.activeEffects.memberDisabled)
+            .length;
+
+        dpRate = gameState.stage2Upgrades.theGroupChat.effect * (1 + unlockedMembers) * gameState.engagement;
+        dpRate *= gameState.events.activeEffects.dpMultiplier;
+
+        if (gameState.members.james.unlocked && gameState.events.activeEffects.memberDisabled !== 'james') {
+            dpRate *= 1.1;
+        }
     }
 
-    let unlockedMembers = Object.entries(gameState.members)
-        .filter(([key, m]) => m.unlocked && key !== gameState.events.activeEffects.memberDisabled)
-        .length;
-
-    let dpRate = gameState.stage2Upgrades.theGroupChat.effect * (1 + unlockedMembers) * gameState.engagement;
-    dpRate *= gameState.events.activeEffects.dpMultiplier;
-
-    if (gameState.members.james.unlocked && gameState.events.activeEffects.memberDisabled !== 'james') {
-        dpRate *= 1.1;
+    // Stage 2 members each add +1 DP/s (flat bonus, always active during discussions)
+    const stage2MemberKeys = ['jane', 'andrew', 'daniel', 'conner', 'megan', 'macy', 'andy', 'ben', 'paul', 'rachael'];
+    for (const key of stage2MemberKeys) {
+        if (gameState.members[key]?.unlocked && key !== gameState.events.activeEffects.memberDisabled) {
+            dpRate += 1;
+        }
     }
 
     return dpRate;
@@ -903,7 +912,7 @@ function recruitMember(memberKey) {
     if (member.isStage2Member) {
         showMessage(
             `${member.name} Joined!`,
-            `${member.name} is now part of the discussion!<br><em>+5% engagement bonus</em>`,
+            `${member.name} is now part of the discussion!<br><em>+1 discussion point/second, +5% engagement bonus</em>`,
             'member'
         );
     } else {
@@ -2809,24 +2818,9 @@ function gameLoop() {
             return;
         }
 
-        // Group Chat upgrade: members generate passive DP and discussion progress
-        if (gameState.stage2Upgrades.theGroupChat.level > 0) {
-            // Count unlocked members, excluding disabled member from Schedule Conflict
-            let unlockedMembers = Object.entries(gameState.members)
-                .filter(([key, m]) => m.unlocked && key !== gameState.events.activeEffects.memberDisabled)
-                .length;
-
-            // Base: 0.1 DP per second, plus 0.1 per unlocked member, multiplied by engagement
-            let dpRate = gameState.stage2Upgrades.theGroupChat.effect * (1 + unlockedMembers) * gameState.engagement;
-
-            // Apply In-Person Meetup multiplier
-            dpRate *= gameState.events.activeEffects.dpMultiplier;
-
-            // James bonus: +10% DP efficiency (if not disabled)
-            if (gameState.members.james.unlocked && gameState.events.activeEffects.memberDisabled !== 'james') {
-                dpRate *= 1.1;
-            }
-
+        // Passive DP generation from Group Chat upgrade and Stage 2 members
+        const dpRate = calculateDiscussionPointsPerSecond();
+        if (dpRate > 0) {
             const passiveGain = dpRate * deltaTime;
             gameState.discussionPoints += passiveGain;
 
