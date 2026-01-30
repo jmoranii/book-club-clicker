@@ -272,6 +272,117 @@ const gameState = {
             basePPS: 150,
             currentPPS: 150,
             triggersStage2: true // Special flag
+        },
+        // Stage 2 Members (cost DP to recruit, boost Group Chat and engagement)
+        jane: {
+            name: 'Jane',
+            unlockBook: 30,
+            recruitCost: 100,
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 0,
+            currentPPS: 0,
+            isStage2Member: true
+        },
+        andrew: {
+            name: 'Andrew',
+            unlockBook: 40,
+            recruitCost: 150,
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 0,
+            currentPPS: 0,
+            isStage2Member: true
+        },
+        daniel: {
+            name: 'Daniel',
+            unlockBook: 50,
+            recruitCost: 200,
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 0,
+            currentPPS: 0,
+            isStage2Member: true
+        },
+        conner: {
+            name: 'Conner',
+            unlockBook: 60,
+            recruitCost: 250,
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 0,
+            currentPPS: 0,
+            isStage2Member: true
+        },
+        megan: {
+            name: 'Megan',
+            unlockBook: 70,
+            recruitCost: 300,
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 0,
+            currentPPS: 0,
+            isStage2Member: true
+        },
+        macy: {
+            name: 'Macy',
+            unlockBook: 90,
+            recruitCost: 400,
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 0,
+            currentPPS: 0,
+            isStage2Member: true
+        },
+        andy: {
+            name: 'Andy',
+            unlockBook: 110,
+            recruitCost: 500,
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 0,
+            currentPPS: 0,
+            isStage2Member: true
+        },
+        ben: {
+            name: 'Ben',
+            unlockBook: 130,
+            recruitCost: 600,
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 0,
+            currentPPS: 0,
+            isStage2Member: true
+        },
+        paul: {
+            name: 'Paul',
+            unlockBook: 150,
+            recruitCost: 750,
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 0,
+            currentPPS: 0,
+            isStage2Member: true
+        },
+        rachael: {
+            name: 'Rachael',
+            unlockBook: 160,
+            recruitCost: 1000,
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 0,
+            currentPPS: 0,
+            isStage2Member: true
         }
     },
 
@@ -568,6 +679,18 @@ function determineDiscussionQuality() {
     return 'good';
 }
 
+// Calculate engagement bonus from Stage 2 members (+5% per member)
+function getStage2MemberEngagementBonus() {
+    const stage2MemberKeys = ['jane', 'andrew', 'daniel', 'conner', 'megan', 'macy', 'andy', 'ben', 'paul', 'rachael'];
+    let bonus = 0;
+    for (const key of stage2MemberKeys) {
+        if (gameState.members[key]?.unlocked) {
+            bonus += 0.05; // +5% per member
+        }
+    }
+    return bonus;
+}
+
 // Complete discussion and advance to next book (Stage 2)
 function completeDiscussion() {
     const book = getCurrentBook();
@@ -600,7 +723,10 @@ function completeDiscussion() {
     }
 
     if (quality !== 'bad') {
-        gameState.engagement = Math.min(gameState.engagement + engagementChange, 3.0);
+        // Apply Stage 2 member bonus to engagement gain
+        const memberBonus = getStage2MemberEngagementBonus();
+        const totalEngagementGain = engagementChange * (1 + memberBonus);
+        gameState.engagement = Math.min(gameState.engagement + totalEngagementGain, 3.0);
     }
 
     // Show completion message
@@ -616,6 +742,9 @@ function completeDiscussion() {
 
     // Handle special book effects
     handleSpecialBook(book);
+
+    // Check for member unlocks (Stage 2 members)
+    checkMemberUnlocks();
 
     // Reset for next book
     gameState.currentBookPages = 0;
@@ -661,9 +790,20 @@ function checkMemberUnlocks() {
     for (const [key, member] of Object.entries(gameState.members)) {
         if (!member.available && !member.unlocked && booksCompleted >= member.unlockBook) {
             member.available = true;
+
+            // Different messages based on member type
+            let costText;
+            if (member.triggersStage2) {
+                costText = 'Ready to talk!';
+            } else if (member.isStage2Member) {
+                costText = `Cost: ${member.recruitCost} DP`;
+            } else {
+                costText = `Cost: ${member.recruitCost} pages`;
+            }
+
             showMessage(
                 'New Member Available!',
-                `${member.name} wants to join the book club!<br><em>Cost: ${member.recruitCost} pages</em>`,
+                `${member.name} wants to join the book club!<br><em>${costText}</em>`,
                 'member'
             );
         }
@@ -680,15 +820,24 @@ function recruitMember(memberKey) {
         return false;
     }
 
-    if (gameState.totalPages < member.recruitCost) {
-        showMessage('Not Enough Pages', `You need ${member.recruitCost} pages to recruit ${member.name}.`, 'normal');
-        return false;
-    }
-
-    // Deduct pages (if any cost)
-    if (member.recruitCost > 0) {
-        gameState.totalPages -= member.recruitCost;
-        gameState.totalWords = gameState.totalPages * WORDS_PER_PAGE;
+    // Stage 2 members cost DP, core members cost pages
+    if (member.isStage2Member) {
+        if (gameState.discussionPoints < member.recruitCost) {
+            showMessage('Not Enough DP', `You need ${member.recruitCost} DP to recruit ${member.name}.`, 'normal');
+            return false;
+        }
+        // Deduct DP
+        gameState.discussionPoints -= member.recruitCost;
+    } else {
+        if (gameState.totalPages < member.recruitCost) {
+            showMessage('Not Enough Pages', `You need ${member.recruitCost} pages to recruit ${member.name}.`, 'normal');
+            return false;
+        }
+        // Deduct pages (if any cost)
+        if (member.recruitCost > 0) {
+            gameState.totalPages -= member.recruitCost;
+            gameState.totalWords = gameState.totalPages * WORDS_PER_PAGE;
+        }
     }
 
     // Recruit member
@@ -721,11 +870,20 @@ function recruitMember(memberKey) {
         return true;
     }
 
-    showMessage(
-        `${member.name} Joined!`,
-        `${member.name} is now reading with the club!<br><em>+${formatNumber(member.currentPPS)} pages/second</em>`,
-        'member'
-    );
+    // Stage 2 members show different message (no PPS)
+    if (member.isStage2Member) {
+        showMessage(
+            `${member.name} Joined!`,
+            `${member.name} is now part of the discussion!<br><em>+5% engagement bonus</em>`,
+            'member'
+        );
+    } else {
+        showMessage(
+            `${member.name} Joined!`,
+            `${member.name} is now reading with the club!<br><em>+${formatNumber(member.currentPPS)} pages/second</em>`,
+            'member'
+        );
+    }
 
     renderMembers();
     updateDisplay();
@@ -738,7 +896,7 @@ function recruitMember(memberKey) {
 function renderMembers() {
     if (!elements.membersContainer) return;
 
-    const memberOrder = ['james', 'sydney', 'tiffany', 'winslow', 'kyle'];
+    const memberOrder = ['james', 'sydney', 'tiffany', 'winslow', 'kyle', 'jane', 'andrew', 'daniel', 'conner', 'megan', 'macy', 'andy', 'ben', 'paul', 'rachael'];
     let html = '';
 
     for (const key of memberOrder) {
@@ -749,22 +907,33 @@ function renderMembers() {
         let action = '';
 
         let avatar = '';
+        const isStage2Member = member.isStage2Member;
 
         if (member.unlocked) {
             // Recruited
             rowClass += ' recruited';
             checkbox = '☑';
-            avatar = `<img class="member-avatar" src="assets/${member.name}.png" alt="${member.name}">`;
-            status = `<span class="member-pps">${formatNumber(member.currentPPS)} p/s</span>`;
+            // Only show avatars for core members (not Stage 2 members)
+            if (!isStage2Member) {
+                avatar = `<img class="member-avatar" src="assets/${member.name}.png" alt="${member.name}">`;
+                status = `<span class="member-pps">${formatNumber(member.currentPPS)} p/s</span>`;
+            } else {
+                status = `<span class="member-pps stage2-member-status">Active</span>`;
+            }
         } else if (member.available) {
             // Available to recruit
             rowClass += ' available';
-            const canAfford = gameState.totalPages >= member.recruitCost;
-            const btnClass = canAfford ? 'recruit-btn' : 'recruit-btn disabled';
-            // Special button text for Kyle (triggers Stage 2)
-            if (member.triggersStage2) {
+            // Stage 2 members cost DP, core members cost pages
+            if (isStage2Member) {
+                const canAfford = gameState.discussionPoints >= member.recruitCost;
+                const btnClass = canAfford ? 'recruit-btn' : 'recruit-btn disabled';
+                action = `<button class="${btnClass}" data-member="${key}">Recruit: ${member.recruitCost} DP</button>`;
+            } else if (member.triggersStage2) {
+                // Special button text for Kyle (triggers Stage 2)
                 action = `<button class="recruit-btn stage2-trigger" data-member="${key}">Get Talking</button>`;
             } else {
+                const canAfford = gameState.totalPages >= member.recruitCost;
+                const btnClass = canAfford ? 'recruit-btn' : 'recruit-btn disabled';
                 action = `<button class="${btnClass}" data-member="${key}">Recruit: ${member.recruitCost}p</button>`;
             }
         } else {
