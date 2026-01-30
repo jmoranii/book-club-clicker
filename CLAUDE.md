@@ -117,6 +117,12 @@ Creates a "streak" mechanic—keep momentum or start over.
 - *"Controversial Opinion"* — 50/50: +30% or -30% engagement.
 - *"The Reread Suggestion"* — Accept for bonus, but delays progress.
 
+**GREEN LIGHT Events (unlocked after Book 100):**
+All GREEN LIGHT events use the format: title "GREEN LIGHT" + lowercase description of effect.
+- *"GREEN LIGHT"* — good vibes boost — 1.5x DP for 30 seconds
+- *"GREEN LIGHT"* — just keep livin' — +20% engagement
+- *"GREEN LIGHT"* — be more stoked — +25% instant progress
+
 ### In-Person Meetup Schedule
 4 meetups across Stage 2, spaced at milestone books:
 - Book 50
@@ -157,7 +163,7 @@ Each book has hidden Discussion Potential:
   - Reality: confusing, uncomfortable, hard to follow
   - Maximum controversy rating. Generates massive DP because no one can stop talking about how bad it was.
   - Achievement: "We Finished It Anyway"
-- **Book 100: Greenlights** — Unlocks GREEN LIGHT events (positive events more common). Matthew McConaughey quotes appear randomly.
+- **Book 100: Greenlights** — Unlocks GREEN LIGHT events. All use format: "GREEN LIGHT" title + lowercase effect description. McConaughey quotes appear on the boost event.
 - **Book 168: Fight Right** — FINALE. Ultimate discussion. All members at full power. Victory screen with 10-year stats.
 
 ### Easter Egg Books

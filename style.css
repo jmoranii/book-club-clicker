@@ -1189,3 +1189,243 @@ section h2 {
     opacity: 1;
     background: #c44;
 }
+
+/* ==================== Phase 12: GREEN LIGHT Events ==================== */
+
+.message-greenlight {
+    border-color: #22c55e;
+    border-width: 2px;
+    background: linear-gradient(to bottom, #f0fdf4, #dcfce7);
+    position: relative;
+}
+
+.message-greenlight::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #22c55e, #86efac, #22c55e);
+    animation: greenlight-pulse 2s ease-in-out infinite;
+}
+
+.message-greenlight .message-title {
+    color: #166534;
+    font-size: 1.15rem;
+}
+
+.message-greenlight .message-text em {
+    color: #22c55e;
+    font-weight: 600;
+}
+
+@keyframes greenlight-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* ==================== Phase 12: Victory Screen ==================== */
+
+.victory-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.victory-overlay.show {
+    opacity: 1;
+}
+
+.victory-modal {
+    background: var(--bg-cream);
+    border: 3px solid var(--gold);
+    border-radius: 12px;
+    padding: 40px;
+    max-width: 520px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    text-align: center;
+    box-shadow:
+        0 0 60px rgba(201, 162, 39, 0.4),
+        0 0 120px rgba(201, 162, 39, 0.2);
+    transform: scale(0.9);
+    transition: transform 0.5s ease;
+}
+
+.victory-overlay.show .victory-modal {
+    transform: scale(1);
+}
+
+.victory-header {
+    margin-bottom: 30px;
+}
+
+.victory-sparkles {
+    color: var(--gold);
+    font-size: 1.5rem;
+    letter-spacing: 10px;
+    margin-bottom: 15px;
+    animation: sparkle 1.5s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.victory-modal h1 {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 2rem;
+    color: var(--leather-brown);
+    margin: 0;
+    letter-spacing: 3px;
+}
+
+.victory-subtitle {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-style: italic;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
+
+.victory-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin: 30px 0;
+    padding: 20px;
+    background: rgba(45, 74, 62, 0.05);
+    border-radius: 8px;
+}
+
+.victory-stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.victory-stat-value {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--forest-green);
+}
+
+.victory-stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.victory-journey {
+    margin: 30px 0;
+    text-align: left;
+}
+
+.victory-journey h2 {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 1.1rem;
+    color: var(--leather-brown);
+    border-bottom: 1px solid var(--border-soft);
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+}
+
+.journey-milestones {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.milestone {
+    padding: 10px 15px;
+    background: var(--bg-parchment);
+    border-left: 3px solid var(--gold);
+    border-radius: 0 4px 4px 0;
+    font-size: 0.9rem;
+}
+
+.victory-message {
+    margin: 30px 0;
+    padding: 20px;
+    background: linear-gradient(to bottom, #fffef5, var(--bg-cream));
+    border: 1px solid var(--gold-light);
+    border-radius: 8px;
+}
+
+.victory-message p {
+    margin: 10px 0;
+    color: var(--text-ink);
+}
+
+.victory-message em {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    color: var(--leather-brown);
+}
+
+.victory-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+.victory-btn {
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.victory-btn-primary {
+    background: linear-gradient(to bottom, var(--forest-green), var(--forest-dark));
+    color: white;
+    box-shadow: 0 3px 0 #1a2e25;
+}
+
+.victory-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 #1a2e25;
+}
+
+.victory-btn-primary:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 #1a2e25;
+}
+
+/* Victory screen responsive */
+@media (max-width: 480px) {
+    .victory-modal {
+        padding: 25px;
+    }
+
+    .victory-modal h1 {
+        font-size: 1.5rem;
+        letter-spacing: 1px;
+    }
+
+    .victory-stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        padding: 15px;
+    }
+
+    .victory-stat-value {
+        font-size: 1.4rem;
+    }
+}

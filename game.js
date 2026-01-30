@@ -3,7 +3,7 @@
 // Constants
 const WORDS_PER_PAGE = 250;
 const SAVE_KEY = 'bookClubClickerSave';
-const SAVE_VERSION = 4; // Bumped for Phase 10 (Events System)
+const SAVE_VERSION = 5; // Bumped for Phase 12 (Special Books & Finale)
 const AUTO_SAVE_INTERVAL = 10000; // 10 seconds
 
 // Discussion Move Definitions
@@ -140,8 +140,54 @@ const DISCUSSION_EVENTS = {
         effectValue: 3.0,
         triggerBooks: [50, 100, 140, 168],
         baseProbability: 0
+    },
+
+    // GREEN LIGHT Events (Phase 12 - unlocked after Book 100)
+    greenlightMoment: {
+        name: 'Green Light Moment',
+        type: 'greenlight',
+        messageTitle: 'GREEN LIGHT',
+        messageText: 'good vibes boost — 1.5x DP for 30 seconds',
+        effect: 'greenlightBoost',
+        effectValue: 1.5,
+        baseProbability: 0.08,
+        canRepeat: true,
+        cooldownSeconds: 45,
+        requiresGreenlight: true
+    },
+    justKeepLivin: {
+        name: 'Just Keep Livin',
+        type: 'greenlight',
+        messageTitle: 'GREEN LIGHT',
+        messageText: 'just keep livin\' — +20% engagement',
+        effect: 'boostEngagement',
+        effectValue: 0.20,
+        baseProbability: 0.05,
+        canRepeat: true,
+        cooldownSeconds: 60,
+        requiresGreenlight: true
+    },
+    beMoreStoked: {
+        name: 'Be More Stoked',
+        type: 'greenlight',
+        messageTitle: 'GREEN LIGHT',
+        messageText: 'be more stoked — +25% instant progress',
+        effect: 'instantProgress',
+        effectValue: 0.25,
+        baseProbability: 0.04,
+        canRepeat: false,
+        requiresGreenlight: true
     }
 };
+
+// McConaughey quotes for GREEN LIGHT events
+const MCCONAUGHEY_QUOTES = [
+    "Alright, alright, alright...",
+    "Just keep livin'.",
+    "Life's barely long enough to get good at one thing.",
+    "Sometimes you gotta go back to actually move forward.",
+    "Green lights are freedom, man."
+];
 
 // Game pause state (for when tab is hidden)
 let isGamePaused = false;
@@ -232,6 +278,9 @@ const gameState = {
     // Special unlocks
     careerExpertRuleUnlocked: false,
     greenlightUnlocked: false,
+    badBookSurvived: false,
+    gameComplete: false,
+    victoryStats: null,
 
     // Events state (Phase 10)
     events: {
@@ -1184,6 +1233,11 @@ function canEventTrigger(eventId) {
     const event = DISCUSSION_EVENTS[eventId];
     const eventState = gameState.events;
 
+    // Check greenlight requirement (Phase 12)
+    if (event.requiresGreenlight && !gameState.greenlightUnlocked) {
+        return false;
+    }
+
     // Non-repeating already occurred?
     if (!event.canRepeat && eventState.occurredThisBook.includes(eventId)) {
         return false;
@@ -1241,7 +1295,19 @@ function checkForEvents() {
     // Check special events first (guaranteed at specific books)
     checkSpecialEvents();
 
-    // Roll for random events (one per check max)
+    // Check GREEN LIGHT events if unlocked (Phase 12)
+    if (gameState.greenlightUnlocked) {
+        const greenlightEvents = ['greenlightMoment', 'justKeepLivin', 'beMoreStoked'];
+        for (const eventId of greenlightEvents) {
+            if (!canEventTrigger(eventId)) continue;
+            if (Math.random() < calculateEventProbability(eventId)) {
+                executeEvent(eventId);
+                return; // Only one event per check
+            }
+        }
+    }
+
+    // Roll for regular random events (one per check max)
     const eventOrder = [
         'technicalDifficulties', 'theTangent', 'scheduleConflict',
         'cameraOffEnergy', 'thePerfectTake', 'everyoneActuallyReadIt',
@@ -1303,6 +1369,9 @@ function executeEvent(eventId) {
             break;
         case 'dpMultiplier':
             executeInPersonMeetup(event);
+            break;
+        case 'greenlightBoost':
+            executeGreenlightBoost(event);
             break;
     }
 
@@ -1450,6 +1519,26 @@ function executeInPersonMeetup(event) {
     updateDisplay();
 }
 
+// GREEN LIGHT Boost - temporary 1.5x DP multiplier (Phase 12)
+function executeGreenlightBoost(event) {
+    const originalMultiplier = gameState.events.activeEffects.dpMultiplier;
+    gameState.events.activeEffects.dpMultiplier *= event.effectValue;
+
+    const quote = MCCONAUGHEY_QUOTES[Math.floor(Math.random() * MCCONAUGHEY_QUOTES.length)];
+
+    showMessage(
+        event.messageTitle,
+        `${quote}<br><em>${event.effectValue}x DP for 30 seconds!</em>`,
+        'greenlight'
+    );
+
+    // Revert after 30 seconds
+    setTimeout(() => {
+        gameState.events.activeEffects.dpMultiplier = originalMultiplier;
+        showMessage('Green Light Fading...', 'Back to normal, but stay stoked!', 'normal');
+    }, 30000);
+}
+
 // Reset events state for new book
 function resetEventsForNewBook() {
     gameState.events.occurredThisBook = [];
@@ -1465,6 +1554,76 @@ function resetEventsForNewBook() {
 }
 
 // ==================== END EVENTS SYSTEM ====================
+
+// ==================== VICTORY SCREEN (Phase 12) ====================
+
+function showVictoryScreen() {
+    const stats = gameState.victoryStats;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'victory-overlay';
+    overlay.innerHTML = `
+        <div class="victory-modal">
+            <div class="victory-header">
+                <div class="victory-sparkles">&#10022; &#10022; &#10022;</div>
+                <h1>10 YEARS OF BOOK CLUB</h1>
+                <div class="victory-subtitle">The Journey is Complete</div>
+            </div>
+
+            <div class="victory-stats">
+                <div class="victory-stat">
+                    <span class="victory-stat-value">${stats.totalBooks}</span>
+                    <span class="victory-stat-label">Books Completed</span>
+                </div>
+                <div class="victory-stat">
+                    <span class="victory-stat-value">${formatNumber(stats.totalWords)}</span>
+                    <span class="victory-stat-label">Words Read</span>
+                </div>
+                <div class="victory-stat">
+                    <span class="victory-stat-value">${formatNumber(stats.totalPages)}</span>
+                    <span class="victory-stat-label">Pages Turned</span>
+                </div>
+                <div class="victory-stat">
+                    <span class="victory-stat-value">${formatNumber(stats.discussionPoints)}</span>
+                    <span class="victory-stat-label">Discussion Points</span>
+                </div>
+            </div>
+
+            <div class="victory-journey">
+                <h2>The Journey</h2>
+                <div class="journey-milestones">
+                    <div class="milestone">&#128214; Started with "The Lies of Locke Lamora"</div>
+                    <div class="milestone">&#128101; Recruited James, Sydney, Tiffany & Winslow</div>
+                    ${stats.badBookSurvived ? '<div class="milestone">&#128170; Survived "THE BAD BOOK"</div>' : ''}
+                    ${stats.greenlightUnlocked ? '<div class="milestone">&#128994; Found the Green Lights</div>' : ''}
+                    <div class="milestone">&#127942; Completed "Fight Right" - the finale</div>
+                </div>
+            </div>
+
+            <div class="victory-message">
+                <p><em>"168 books. Countless discussions. One amazing book club."</em></p>
+                <p>Thank you for playing Book Club Clicker!</p>
+            </div>
+
+            <div class="victory-actions">
+                <button class="victory-btn victory-btn-primary" onclick="closeVictoryScreen()">Continue</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.classList.add('show'), 10);
+}
+
+function closeVictoryScreen() {
+    const overlay = document.querySelector('.victory-overlay');
+    if (overlay) {
+        overlay.classList.remove('show');
+        setTimeout(() => overlay.remove(), 500);
+    }
+}
+
+// ==================== END VICTORY SCREEN ====================
 
 // Show completion message
 function showMessage(title, text, type = 'normal') {
@@ -1554,6 +1713,58 @@ function handleSpecialBook(book) {
             setTimeout(() => {
                 showMessage('STAGE 2 BEGINS!', 'The Discussion Era<br><em>Your members now auto-read. Click to facilitate discussions!</em>', 'transition');
             }, 500);
+            break;
+
+        case 'the_bad_book':
+            // Phase 12: Book 62 - Black Leopard, Red Wolf
+            gameState.badBookSurvived = true;
+            showMessage(
+                'WE SURVIVED "THE BAD BOOK"',
+                `"${book.title}" is finally over.<br><em>Achievement unlocked!</em>`,
+                'event-special'
+            );
+            // Reward for surviving
+            gameState.engagement = Math.min(gameState.engagement + 0.5, 3.0);
+            gameState.discussionPoints += 500;
+            setTimeout(() => {
+                showMessage(
+                    'Achievement: "We Finished It Anyway"',
+                    '+50% engagement, +500 DP<br><em>For surviving the most controversial book.</em>',
+                    'special'
+                );
+            }, 2000);
+            break;
+
+        case 'greenlights':
+            // Phase 12: Book 100 - Greenlights
+            gameState.greenlightUnlocked = true;
+            showMessage(
+                'GREEN LIGHTS UNLOCKED!',
+                `"${book.title}" by Matthew McConaughey<br><em>"Alright, alright, alright..."</em>`,
+                'event-special'
+            );
+            setTimeout(() => {
+                showMessage(
+                    'GREEN LIGHT Events Active',
+                    'Positive McConaughey-inspired events will now appear!',
+                    'greenlight'
+                );
+            }, 2500);
+            break;
+
+        case 'finale':
+            // Phase 12: Book 168 - Victory screen
+            gameState.gameComplete = true;
+            gameState.victoryStats = {
+                totalBooks: gameState.booksCompleted.length,
+                totalWords: gameState.totalWords,
+                totalPages: gameState.totalPages,
+                discussionPoints: gameState.discussionPoints,
+                badBookSurvived: gameState.badBookSurvived,
+                greenlightUnlocked: gameState.greenlightUnlocked
+            };
+            setTimeout(() => showVictoryScreen(), 1000);
+            saveGame();
             break;
     }
 }
@@ -1850,6 +2061,9 @@ function saveGame() {
                 lastDiscussionQuality: gameState.lastDiscussionQuality,
                 careerExpertRuleUnlocked: gameState.careerExpertRuleUnlocked,
                 greenlightUnlocked: gameState.greenlightUnlocked,
+                badBookSurvived: gameState.badBookSurvived,
+                gameComplete: gameState.gameComplete,
+                victoryStats: gameState.victoryStats,
                 globalMultiplier: gameState.globalMultiplier,
                 gameStartTime: gameState.gameStartTime,
                 totalPlayTime: gameState.totalPlayTime
@@ -1945,6 +2159,9 @@ function loadGame() {
         gameState.lastDiscussionQuality = saved.lastDiscussionQuality || 'good';
         gameState.careerExpertRuleUnlocked = saved.careerExpertRuleUnlocked || false;
         gameState.greenlightUnlocked = saved.greenlightUnlocked || false;
+        gameState.badBookSurvived = saved.badBookSurvived || false;
+        gameState.gameComplete = saved.gameComplete || false;
+        gameState.victoryStats = saved.victoryStats || null;
         gameState.globalMultiplier = saved.globalMultiplier || 1.0;
         gameState.gameStartTime = saved.gameStartTime || Date.now();
         gameState.totalPlayTime = saved.totalPlayTime || 0;
