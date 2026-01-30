@@ -258,6 +258,17 @@ const gameState = {
             level: 0,
             basePPS: 100,
             currentPPS: 100
+        },
+        kyle: {
+            name: 'Kyle',
+            unlockBook: 25,
+            recruitCost: 0, // Free - but triggers Stage 2
+            available: false,
+            unlocked: false,
+            level: 0,
+            basePPS: 150,
+            currentPPS: 150,
+            triggersStage2: true // Special flag
         }
     },
 
@@ -522,6 +533,11 @@ function transitionToDiscussionPhase() {
     updateDisplay();
 }
 
+// Check if we're waiting for Kyle to be recruited (blocks progression after Book 25)
+function isWaitingForKyle() {
+    return gameState.members.kyle.available && !gameState.members.kyle.unlocked && gameState.stage === 1;
+}
+
 // Determine discussion quality based on performance
 function determineDiscussionQuality() {
     const discussionRequired = getDiscussionRequired();
@@ -666,12 +682,38 @@ function recruitMember(memberKey) {
         return false;
     }
 
-    // Deduct pages
-    gameState.totalPages -= member.recruitCost;
-    gameState.totalWords = gameState.totalPages * WORDS_PER_PAGE;
+    // Deduct pages (if any cost)
+    if (member.recruitCost > 0) {
+        gameState.totalPages -= member.recruitCost;
+        gameState.totalWords = gameState.totalPages * WORDS_PER_PAGE;
+    }
 
     // Recruit member
     member.unlocked = true;
+
+    // Check if this member triggers Stage 2 (Kyle)
+    if (member.triggersStage2) {
+        showMessage(
+            `${member.name} Joined!`,
+            `${member.name} is now part of the club!<br><em>Something is changing...</em>`,
+            'member'
+        );
+
+        renderMembers();
+        saveGame();
+
+        // Show the dramatic cutscene, then transition to Stage 2
+        setTimeout(() => {
+            showStageTransitionCutscene(() => {
+                gameState.stage = 2;
+                gameState.bookPhase = 'reading';
+                updateDisplay();
+                showMessage('STAGE 2 BEGINS!', 'The Discussion Era<br><em>Your members now auto-read. Click to facilitate discussions!</em>', 'transition');
+            });
+        }, 1500);
+
+        return true;
+    }
 
     showMessage(
         `${member.name} Joined!`,
@@ -690,7 +732,7 @@ function recruitMember(memberKey) {
 function renderMembers() {
     if (!elements.membersContainer) return;
 
-    const memberOrder = ['james', 'sydney', 'tiffany', 'winslow'];
+    const memberOrder = ['james', 'sydney', 'tiffany', 'winslow', 'kyle'];
     let html = '';
 
     for (const key of memberOrder) {
@@ -710,7 +752,12 @@ function renderMembers() {
             rowClass += ' available';
             const canAfford = gameState.totalPages >= member.recruitCost;
             const btnClass = canAfford ? 'recruit-btn' : 'recruit-btn disabled';
-            action = `<button class="${btnClass}" data-member="${key}">Recruit: ${member.recruitCost}p</button>`;
+            // Special button text for Kyle (triggers Stage 2)
+            if (member.triggersStage2) {
+                action = `<button class="recruit-btn stage2-trigger" data-member="${key}">Get Talking</button>`;
+            } else {
+                action = `<button class="${btnClass}" data-member="${key}">Recruit: ${member.recruitCost}p</button>`;
+            }
         } else {
             // Locked
             rowClass += ' locked';
@@ -1967,13 +2014,13 @@ function handleSpecialBook(book) {
         case 'stage_transition':
             // Unlock Career Expert Rule
             gameState.careerExpertRuleUnlocked = true;
-            // Show the dramatic cutscene, then transition to Stage 2
-            showStageTransitionCutscene(() => {
-                gameState.stage = 2;
-                gameState.bookPhase = 'reading';
-                updateDisplay();
-                showMessage('STAGE 2 BEGINS!', 'The Discussion Era<br><em>Your members now auto-read. Click to facilitate discussions!</em>', 'transition');
-            });
+            // Make Kyle available to recruit (recruiting him triggers Stage 2)
+            gameState.members.kyle.available = true;
+            showMessage(
+                'New Member Available!',
+                'Kyle wants to join the book club!<br><em>Recruit him to begin a new era...</em>',
+                'member'
+            );
             break;
 
         case 'the_bad_book':
@@ -2032,6 +2079,11 @@ function handleSpecialBook(book) {
 
 // Handle read button click
 function handleReadClick() {
+    // Block clicks when waiting for Kyle to be recruited
+    if (isWaitingForKyle()) {
+        return;
+    }
+
     // Check if all books are done
     if (isAllBooksComplete()) {
         updateDisplay();
@@ -2211,7 +2263,13 @@ function updateDisplay() {
     }
 
     // Update book title
-    elements.bookTitle.textContent = `Current Book: #${currentBook.number} - ${currentBook.title}`;
+    if (isWaitingForKyle()) {
+        elements.bookTitle.textContent = "It's time to talk about the books...";
+        elements.bookTitle.classList.add('waiting-for-kyle');
+    } else {
+        elements.bookTitle.textContent = `Current Book: #${currentBook.number} - ${currentBook.title}`;
+        elements.bookTitle.classList.remove('waiting-for-kyle');
+    }
 
     // Update stats
     elements.totalWords.textContent = formatNumber(gameState.totalWords);
@@ -2252,14 +2310,40 @@ function updateDisplay() {
     } else {
         // Show reading progress, hide discussion progress
         if (elements.readingProgressContainer) {
-            elements.readingProgressContainer.style.display = 'block';
-            const progress = Math.min((gameState.currentBookPages / currentBook.pages_required) * 100, 100);
-            elements.currentPages.textContent = Math.floor(Math.min(gameState.currentBookPages, currentBook.pages_required));
-            elements.requiredPages.textContent = currentBook.pages_required;
-            elements.bookProgress.style.width = progress + '%';
+            // Hide progress bar when waiting for Kyle
+            if (isWaitingForKyle()) {
+                elements.readingProgressContainer.style.display = 'none';
+            } else {
+                elements.readingProgressContainer.style.display = 'block';
+                const progress = Math.min((gameState.currentBookPages / currentBook.pages_required) * 100, 100);
+                elements.currentPages.textContent = Math.floor(Math.min(gameState.currentBookPages, currentBook.pages_required));
+                elements.requiredPages.textContent = currentBook.pages_required;
+                elements.bookProgress.style.width = progress + '%';
+            }
         }
         if (elements.discussionProgressContainer) {
             elements.discussionProgressContainer.style.display = 'none';
+        }
+    }
+
+    // Update read button when waiting for Kyle
+    if (elements.readButton) {
+        if (isWaitingForKyle()) {
+            elements.readButton.disabled = true;
+            elements.readButton.textContent = 'RECRUIT KYLE';
+            elements.readButton.classList.add('waiting-for-kyle');
+            elements.readButton.classList.remove('discuss-mode');
+        } else {
+            elements.readButton.disabled = false;
+            elements.readButton.classList.remove('waiting-for-kyle');
+            // Restore proper button text based on phase
+            if (inDiscussion) {
+                elements.readButton.textContent = 'DISCUSS';
+                elements.readButton.classList.add('discuss-mode');
+            } else {
+                elements.readButton.textContent = 'READ WORDS';
+                elements.readButton.classList.remove('discuss-mode');
+            }
         }
     }
 

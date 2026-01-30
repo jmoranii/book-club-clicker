@@ -482,6 +482,43 @@ section h2 {
     transform: none;
 }
 
+/* Kyle's special "Get Talking" button */
+.recruit-btn.stage2-trigger {
+    background: linear-gradient(to bottom, var(--forest-green), var(--forest-dark));
+    color: #fff;
+    box-shadow: 0 2px 0 #1a2e25;
+    font-weight: 700;
+    letter-spacing: 1px;
+    animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.recruit-btn.stage2-trigger:hover {
+    background: linear-gradient(to bottom, #3d6b5a, var(--forest-dark));
+    box-shadow: 0 3px 0 #1a2e25;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 2px 0 #1a2e25, 0 0 10px rgba(45, 74, 62, 0.3); }
+    50% { box-shadow: 0 2px 0 #1a2e25, 0 0 20px rgba(45, 74, 62, 0.6); }
+}
+
+/* Waiting for Kyle state */
+.book-title.waiting-for-kyle {
+    font-style: italic;
+    color: var(--forest-green);
+}
+
+.read-button.waiting-for-kyle {
+    background: linear-gradient(to bottom, #888, #666);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.read-button.waiting-for-kyle:hover {
+    transform: none;
+    background: linear-gradient(to bottom, #888, #666);
+}
+
 /* Upgrades Section */
 .upgrades-section h2 {
     color: var(--leather-brown);
