@@ -192,6 +192,9 @@ const MCCONAUGHEY_QUOTES = [
 // Game pause state (for when tab is hidden)
 let isGamePaused = false;
 
+// Cutscene active state (pauses game during stage transition)
+let isCutsceneActive = false;
+
 // Interval IDs (for cleanup on reset)
 let gameLoopInterval = null;
 let autoSaveInterval = null;
@@ -693,6 +696,9 @@ function recruitMember(memberKey) {
 
     // Check if this member triggers Stage 2 (Kyle)
     if (member.triggersStage2) {
+        // Pause the game immediately (cutscene will also set this, but we need it now for the delay)
+        isCutsceneActive = true;
+
         showMessage(
             `${member.name} Joined!`,
             `${member.name} is now part of the club!<br><em>Something is changing...</em>`,
@@ -1605,6 +1611,9 @@ function resetEventsForNewBook() {
 // ==================== STAGE TRANSITION CUTSCENE ====================
 
 function showStageTransitionCutscene(onComplete) {
+    // Pause the game during the cutscene
+    isCutsceneActive = true;
+
     const overlay = document.createElement('div');
     overlay.className = 'stage-cutscene-overlay';
     overlay.innerHTML = `
@@ -1623,6 +1632,8 @@ function showStageTransitionCutscene(onComplete) {
 
         setTimeout(() => {
             overlay.remove();
+            // Resume the game
+            isCutsceneActive = false;
             if (onComplete) onComplete();
         }, 800);
     }, 10000);
@@ -2159,9 +2170,9 @@ function handleReadClick() {
     const pagesGained = (gameState.wordsPerClick / WORDS_PER_PAGE) * gameState.currentBookMultiplier;
     gameState.currentBookPages += pagesGained;
 
-    // Check for book/phase completion
+    // Check for book/phase completion (but not while waiting for Kyle)
     const currentBook = getCurrentBook();
-    if (gameState.currentBookPages >= currentBook.pages_required) {
+    if (gameState.currentBookPages >= currentBook.pages_required && !isWaitingForKyle()) {
         if (isStage2()) {
             // Stage 2: Transition to discussion phase
             transitionToDiscussionPhase();
@@ -2264,7 +2275,7 @@ function updateDisplay() {
 
     // Update book title
     if (isWaitingForKyle()) {
-        elements.bookTitle.textContent = "It's time to talk about the books...";
+        elements.bookTitle.textContent = "You've read and you've read, now here's the twist— a book club needs talk to truly exist!";
         elements.bookTitle.classList.add('waiting-for-kyle');
     } else {
         elements.bookTitle.textContent = `Current Book: #${currentBook.number} - ${currentBook.title}`;
@@ -2579,6 +2590,12 @@ function gameLoop() {
         return;
     }
 
+    // Don't progress during stage transition cutscene
+    if (isCutsceneActive) {
+        lastTime = Date.now(); // Reset timer to prevent time accumulation
+        return;
+    }
+
     const now = Date.now();
     const deltaTime = (now - lastTime) / 1000; // Convert to seconds
     lastTime = now;
@@ -2621,6 +2638,11 @@ function gameLoop() {
             gameState.discussionPoints += dpRate * deltaTime;
             updateStatsDisplay();
         }
+        return;
+    }
+
+    // Block all progression while waiting for Kyle
+    if (isWaitingForKyle()) {
         return;
     }
 
