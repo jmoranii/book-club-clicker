@@ -14,7 +14,7 @@ An incremental clicker game celebrating a 10-year book club's journey through 16
 - `index.html` - Game UI structure
 - `style.css` - Cozy library aesthetic (Libre Baskerville + Source Sans 3 fonts)
 - `game.js` - Game logic, state management, game loop
-- `books.json` - Book data (currently 25 books for Stage 1, 168 total planned)
+- `books.json` - Book data (164 books from real book club history)
 - `CLAUDE.md` - This file
 
 ---
@@ -213,12 +213,12 @@ Each book has hidden Discussion Potential:
   - Chaotic events: Controversial Opinion, The Reread Suggestion
   - In-person meetups at milestone books (50, 100, 140, 168)
 
-- [ ] **Phase 11: Full Book Data**
-  - Add books 36-168 to books.json
-  - Assign controversy ratings (low/medium/high/maximum)
-  - Assign categories and special flags
-  - George Washington: A Life marathon mechanic
-  - Book-specific flavor text and Easter eggs
+- [x] **Phase 11: Full Book Data**
+  - All 164 books from real book club CSV added to books.json
+  - Controversy ratings assigned (low/medium/high/maximum)
+  - Categories and special flags assigned
+  - George Washington: A Life marked as marathon (book 78)
+  - Book-specific flavor text and Easter eggs based on club history
 
 - [ ] **Phase 12: Special Books & Finale**
   - Book 62: Black Leopard, Red Wolf "THE BAD BOOK" special behavior
