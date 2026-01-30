@@ -2163,7 +2163,7 @@ function showMessage(title, text, type = 'normal') {
     setTimeout(() => {
         messageDiv.classList.remove('show');
         setTimeout(() => messageDiv.remove(), 300);
-    }, 4000);
+    }, 6000);
 }
 
 // Complete current book and advance
