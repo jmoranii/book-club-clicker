@@ -5,6 +5,7 @@ const WORDS_PER_PAGE = 250;
 const SAVE_KEY = 'bookClubClickerSave';
 const SAVE_VERSION = 5; // Bumped for Phase 12 (Special Books & Finale)
 const AUTO_SAVE_INTERVAL = 10000; // 10 seconds
+const MOVE_COOLDOWN = 10000; // 10 seconds cooldown between discussion moves
 
 // Discussion Move Definitions
 const DISCUSSION_MOVES = {
@@ -399,6 +400,13 @@ const gameState = {
     didntFinishPenalty: 0,          // Remaining clicks with penalty
     lastDiscussionQuality: 'good',  // 'great', 'good', 'bad'
     showingBookSelector: false,     // UI state for reminds me
+    moveCooldowns: {                // Timestamps when moves were last used
+        hotTake: 0,
+        deepDive: 0,
+        remindsMe: 0,
+        devilsAdvocate: 0,
+        didntFinish: 0
+    },
 
     // Special unlocks
     careerExpertRuleUnlocked: false,
@@ -1240,11 +1248,18 @@ function renderMoves() {
 
         // Check if move is disabled (remindsMe can only be used once per discussion)
         const isUsed = (key === 'remindsMe' && gameState.usedRemindsMeThisBook);
-        const isDisabled = !canAfford || isUsed;
+
+        // Check if on cooldown
+        const onCooldown = isOnCooldown(key);
+        const cooldownRemaining = onCooldown ? getCooldownRemaining(key) : 0;
+
+        const isDisabled = !canAfford || isUsed || onCooldown;
 
         let btnClass = 'move-btn';
         if (isUsed) {
             btnClass += ' used';
+        } else if (onCooldown) {
+            btnClass += ' on-cooldown';
         } else if (isDisabled) {
             btnClass += ' disabled';
         }
@@ -1261,12 +1276,17 @@ function renderMoves() {
         const bonusHtml = modifiers.bonusText ?
             `<span class="move-bonus">${modifiers.bonusText}</span>` : '';
 
+        // Show cooldown countdown
+        const cooldownHtml = onCooldown ?
+            `<span class="move-cooldown">${cooldownRemaining}s</span>` : '';
+
         html += `
             <button class="${btnClass}" data-move="${key}" ${isDisabled ? 'disabled' : ''}>
                 <span class="move-name">${move.name}</span>
                 <span class="move-desc">${move.description}</span>
                 <span class="${costClass}">${costDisplay}</span>
                 ${bonusHtml}
+                ${cooldownHtml}
             </button>
         `;
     }
@@ -1274,11 +1294,77 @@ function renderMoves() {
     elements.movesContainer.innerHTML = html;
 }
 
+// Check if a move is on cooldown
+function isOnCooldown(moveKey) {
+    const lastUsed = gameState.moveCooldowns[moveKey] || 0;
+    return Date.now() - lastUsed < MOVE_COOLDOWN;
+}
+
+// Get remaining cooldown time in seconds
+function getCooldownRemaining(moveKey) {
+    const lastUsed = gameState.moveCooldowns[moveKey] || 0;
+    const elapsed = Date.now() - lastUsed;
+    const remaining = MOVE_COOLDOWN - elapsed;
+    return remaining > 0 ? Math.ceil(remaining / 1000) : 0;
+}
+
+// Track last cooldown update to avoid excessive DOM updates
+let lastCooldownUpdate = 0;
+
+// Update cooldown display without re-rendering entire moves section
+function updateMoveCooldownDisplay() {
+    // Only update once per second
+    const now = Date.now();
+    if (now - lastCooldownUpdate < 1000) {
+        return;
+    }
+    lastCooldownUpdate = now;
+
+    // Check if any cooldowns are active
+    const moveOrder = ['hotTake', 'deepDive', 'remindsMe', 'devilsAdvocate', 'didntFinish'];
+    let needsFullRender = false;
+
+    for (const key of moveOrder) {
+        const btn = elements.movesContainer?.querySelector(`[data-move="${key}"]`);
+        if (!btn) continue;
+
+        const wasOnCooldown = btn.classList.contains('on-cooldown');
+        const nowOnCooldown = isOnCooldown(key);
+        const remaining = getCooldownRemaining(key);
+
+        // If cooldown state changed, need full re-render
+        if (wasOnCooldown !== nowOnCooldown) {
+            needsFullRender = true;
+            break;
+        }
+
+        // Update the countdown text if still on cooldown
+        if (nowOnCooldown) {
+            const cooldownSpan = btn.querySelector('.move-cooldown');
+            if (cooldownSpan) {
+                cooldownSpan.textContent = `${remaining}s`;
+            }
+        }
+    }
+
+    // Full re-render if cooldown states changed (enables/disables buttons)
+    if (needsFullRender) {
+        renderMoves();
+    }
+}
+
 // Execute a discussion move
 function executeMove(moveKey) {
     const move = DISCUSSION_MOVES[moveKey];
     const modifiers = getMoveModifiers(moveKey);
     const cost = getMoveCost(moveKey);
+
+    // Check if on cooldown
+    if (isOnCooldown(moveKey)) {
+        const remaining = getCooldownRemaining(moveKey);
+        showMessage('On Cooldown', `${move.name} is on cooldown. ${remaining}s remaining.`, 'normal');
+        return false;
+    }
 
     // Check if can afford
     if (gameState.discussionPoints < cost) {
@@ -1288,6 +1374,11 @@ function executeMove(moveKey) {
 
     // Deduct cost
     gameState.discussionPoints -= cost;
+
+    // Set cooldown (except remindsMe which sets it after selection)
+    if (moveKey !== 'remindsMe') {
+        gameState.moveCooldowns[moveKey] = Date.now();
+    }
 
     // Execute move-specific logic
     switch (moveKey) {
@@ -1465,8 +1556,9 @@ function executeRemindsMe(selectedBookNum) {
     // Add progress
     gameState.currentDiscussionProgress += totalBonus;
 
-    // Mark as used this book
+    // Mark as used this book and set cooldown
     gameState.usedRemindsMeThisBook = true;
+    gameState.moveCooldowns.remindsMe = Date.now();
 
     const selectedBook = booksData.find(b => b.number === selectedBookNum);
     showMessage('"This reminds me of..."', `Connection to "${selectedBook.title}"!<br><em>+${totalBonus} discussion progress</em>`, 'special');
@@ -2172,7 +2264,7 @@ function showMessage(title, text, type = 'normal') {
     setTimeout(() => {
         messageDiv.classList.remove('show');
         setTimeout(() => messageDiv.remove(), 300);
-    }, 6000);
+    }, 9000);
 }
 
 // Complete current book and advance
@@ -2422,6 +2514,8 @@ function updateStatsDisplay() {
         if (elements.discussionProgressText) {
             elements.discussionProgressText.textContent = `${Math.floor(gameState.currentDiscussionProgress)}/${discussionRequired} discussion`;
         }
+        // Update move cooldowns display (only once per second to avoid DOM thrashing)
+        updateMoveCooldownDisplay();
     } else {
         const progress = Math.min((gameState.currentBookPages / currentBook.pages_required) * 100, 100);
         elements.currentPages.textContent = Math.floor(Math.min(gameState.currentBookPages, currentBook.pages_required));
@@ -2831,10 +2925,11 @@ function gameLoop() {
             const discussionRequired = getDiscussionRequired();
             if (gameState.currentDiscussionProgress >= discussionRequired) {
                 completeDiscussion();
-            } else {
-                updateStatsDisplay();
+                return;
             }
         }
+        // Always update stats display during discussion (for cooldown timers)
+        updateStatsDisplay();
         return;
     }
 

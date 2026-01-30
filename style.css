@@ -1089,6 +1089,21 @@ section h2 {
     border-color: var(--forest-green);
 }
 
+.move-btn.on-cooldown {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: rgba(139, 90, 43, 0.1);
+    border-color: var(--leather-brown);
+}
+
+.move-cooldown {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--burgundy);
+    margin-top: 4px;
+}
+
 .move-name {
     font-weight: 600;
     color: var(--text-ink);
