@@ -46,6 +46,25 @@
             </div>
         </section>
 
+        <!-- Discussion Moves (Stage 2 Discussion Phase only) -->
+        <section class="moves-section" id="moves-section" style="display: none;">
+            <h2>DISCUSSION MOVES</h2>
+            <div id="moves-container" class="moves-container">
+                <!-- Dynamically rendered by game.js -->
+            </div>
+        </section>
+
+        <!-- Book Selector Modal (for "Reminds Me" move) -->
+        <div id="book-selector-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h3>Which book does this remind you of?</h3>
+                <div id="book-selector-list" class="book-selector-list">
+                    <!-- Dynamically rendered -->
+                </div>
+                <button id="book-selector-cancel" class="modal-cancel">Cancel</button>
+            </div>
+        </div>
+
         <!-- Stats Section -->
         <section class="stats-section">
             <h2>STATS</h2>

@@ -3,8 +3,48 @@
 // Constants
 const WORDS_PER_PAGE = 250;
 const SAVE_KEY = 'bookClubClickerSave';
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2; // Bumped for Phase 7
 const AUTO_SAVE_INTERVAL = 10000; // 10 seconds
+
+// Discussion Move Definitions
+const DISCUSSION_MOVES = {
+    hotTake: {
+        name: 'Hot Take',
+        cost: 50,
+        description: 'High risk, high reward',
+        successRate: 0.4,  // 40% base, 60% with Tiffany
+        successBonus: 2.0,
+        failPenalty: 0.25
+    },
+    deepDive: {
+        name: 'Deep Dive',
+        cost: 100,
+        description: 'Slow but guaranteed progress',
+        progressBonus: 1.5
+    },
+    remindsMe: {
+        name: '"This reminds me of..."',
+        cost: 75,
+        description: 'Connect to a previous book',
+        baseBonus: 1.0,
+        distanceMultiplier: 0.1
+    },
+    devilsAdvocate: {
+        name: "Devil's Advocate",
+        cost: 60,
+        description: 'Spark debate, generate more DP',
+        dpGenerated: 40,
+        progressBonus: 1.2
+    },
+    didntFinish: {
+        name: '"I didn\'t finish it"',
+        cost: 0,
+        description: 'Shameful but honest',
+        progressBonus: 10,
+        penaltyMultiplier: 0.5,
+        penaltyDuration: 10
+    }
+};
 
 // Game pause state (for when tab is hidden)
 let isGamePaused = false;
@@ -85,6 +125,13 @@ const gameState = {
     currentDiscussionProgress: 0,
     engagement: 1.0, // Multiplier that persists between books
 
+    // Discussion moves tracking
+    discussionClickCount: 0,        // Clicks this discussion (for quality)
+    usedRemindsMeThisBook: false,   // Track callback usage
+    didntFinishPenalty: 0,          // Remaining clicks with penalty
+    lastDiscussionQuality: 'good',  // 'great', 'good', 'bad'
+    showingBookSelector: false,     // UI state for reminds me
+
     // Special unlocks
     careerExpertRuleUnlocked: false,
     greenlightUnlocked: false,
@@ -158,7 +205,12 @@ const elements = {
     readingProgressContainer: null,
     discussionProgressContainer: null,
     dpStat: null,
-    engagementStat: null
+    engagementStat: null,
+    // Discussion moves elements
+    movesSection: null,
+    movesContainer: null,
+    bookSelectorModal: null,
+    bookSelectorList: null
 };
 
 // Initialize DOM element references
@@ -187,6 +239,11 @@ function initElements() {
     elements.discussionProgressContainer = document.getElementById('discussion-progress-container');
     elements.dpStat = document.getElementById('dp-stat');
     elements.engagementStat = document.getElementById('engagement-stat');
+    // Discussion moves elements
+    elements.movesSection = document.getElementById('moves-section');
+    elements.movesContainer = document.getElementById('moves-container');
+    elements.bookSelectorModal = document.getElementById('book-selector-modal');
+    elements.bookSelectorList = document.getElementById('book-selector-list');
 }
 
 // Load books data from JSON
@@ -253,6 +310,33 @@ function transitionToDiscussionPhase() {
     updateDisplay();
 }
 
+// Determine discussion quality based on performance
+function determineDiscussionQuality() {
+    const discussionRequired = getDiscussionRequired();
+    const baseDP = gameState.discussionPointsPerClick * gameState.engagement;
+
+    // Expected clicks = required / DP per click (approximate)
+    const expectedClicks = discussionRequired / baseDP;
+    const actualClicks = gameState.discussionClickCount;
+
+    // Great: used callback OR completed efficiently
+    if (gameState.usedRemindsMeThisBook) {
+        return 'great';
+    }
+
+    // Bad: took more than 2x expected clicks
+    if (actualClicks > expectedClicks * 2) {
+        return 'bad';
+    }
+
+    // Good: completed within reasonable range
+    if (actualClicks <= expectedClicks * 1.2) {
+        return 'good';
+    }
+
+    return 'good';
+}
+
 // Complete discussion and advance to next book (Stage 2)
 function completeDiscussion() {
     const book = getCurrentBook();
@@ -262,17 +346,40 @@ function completeDiscussion() {
         gameState.booksCompleted.push(book.number);
     }
 
-    // Award engagement bonus (simple version - will be expanded in Phase 7)
-    const engagementBonus = 0.05; // +5% for completing a discussion
-    gameState.engagement = Math.min(gameState.engagement + engagementBonus, 3.0); // Cap at 3x
+    // Determine discussion quality and award engagement
+    const quality = determineDiscussionQuality();
+    gameState.lastDiscussionQuality = quality;
+
+    let engagementChange = 0;
+    let qualityText = '';
+
+    switch (quality) {
+        case 'great':
+            engagementChange = 0.15 + Math.random() * 0.05; // +15-20%
+            qualityText = 'Great discussion!';
+            break;
+        case 'good':
+            engagementChange = 0.05 + Math.random() * 0.05; // +5-10%
+            qualityText = 'Good discussion!';
+            break;
+        case 'bad':
+            gameState.engagement = 1.0; // Reset
+            qualityText = 'Discussion dragged on... Engagement reset.';
+            break;
+    }
+
+    if (quality !== 'bad') {
+        gameState.engagement = Math.min(gameState.engagement + engagementChange, 3.0);
+    }
 
     // Show completion message
     let messageType = 'normal';
+    if (quality === 'great') messageType = 'special';
     if (book.controversy === 'high') messageType = 'special';
 
     showMessage(
         `Discussion Complete!`,
-        `"${book.title}" by ${book.author}<br><em>${book.note}</em><br>Engagement: ${gameState.engagement.toFixed(2)}x`,
+        `"${book.title}" by ${book.author}<br><em>${book.note}</em><br>${qualityText}<br>Engagement: ${gameState.engagement.toFixed(2)}x`,
         messageType
     );
 
@@ -283,6 +390,9 @@ function completeDiscussion() {
     gameState.currentBookPages = 0;
     gameState.currentDiscussionProgress = 0;
     gameState.bookPhase = 'reading';
+    gameState.discussionClickCount = 0;
+    gameState.usedRemindsMeThisBook = false;
+    gameState.didntFinishPenalty = 0;
 
     // Advance to next book
     if (gameState.currentBookIndex < booksData.length - 1) {
@@ -499,6 +609,302 @@ function renderUpgrades() {
     elements.upgradesContainer.innerHTML = html;
 }
 
+// Get move modifiers based on member bonuses
+function getMoveModifiers(moveKey) {
+    const modifiers = {
+        costMultiplier: 1.0,
+        successBonus: 0,
+        effectMultiplier: 1.0,
+        bonusText: null
+    };
+
+    switch (moveKey) {
+        case 'deepDive':
+            // Sydney: Deep Dive -25% cost
+            if (gameState.members.sydney.unlocked) {
+                modifiers.costMultiplier = 0.75;
+                modifiers.bonusText = 'Sydney: -25% cost';
+            }
+            break;
+        case 'hotTake':
+            // Tiffany: Hot Take +20% success rate
+            if (gameState.members.tiffany.unlocked) {
+                modifiers.successBonus = 0.2;
+                modifiers.bonusText = 'Tiffany: +20% success';
+            }
+            break;
+        case 'remindsMe':
+            // Winslow: 2x bonus
+            if (gameState.members.winslow.unlocked) {
+                modifiers.effectMultiplier = 2.0;
+                modifiers.bonusText = 'Winslow: 2x bonus';
+            }
+            break;
+    }
+
+    return modifiers;
+}
+
+// Calculate actual cost for a move (after member bonuses)
+function getMoveCost(moveKey) {
+    const move = DISCUSSION_MOVES[moveKey];
+    const modifiers = getMoveModifiers(moveKey);
+    return Math.floor(move.cost * modifiers.costMultiplier);
+}
+
+// Render discussion moves section
+function renderMoves() {
+    if (!elements.movesContainer) return;
+
+    const moveOrder = ['hotTake', 'deepDive', 'remindsMe', 'devilsAdvocate', 'didntFinish'];
+    let html = '';
+
+    for (const key of moveOrder) {
+        const move = DISCUSSION_MOVES[key];
+        const modifiers = getMoveModifiers(key);
+        const actualCost = getMoveCost(key);
+        const canAfford = gameState.discussionPoints >= actualCost;
+
+        // Check if move is disabled (remindsMe can only be used once per discussion)
+        const isUsed = (key === 'remindsMe' && gameState.usedRemindsMeThisBook);
+        const isDisabled = !canAfford || isUsed;
+
+        let btnClass = 'move-btn';
+        if (isUsed) {
+            btnClass += ' used';
+        } else if (isDisabled) {
+            btnClass += ' disabled';
+        }
+
+        const costClass = actualCost === 0 ? 'move-cost free' : 'move-cost';
+        const costText = actualCost === 0 ? 'FREE' : `${actualCost} DP`;
+
+        // Show original cost strikethrough if discounted
+        let costDisplay = costText;
+        if (modifiers.costMultiplier < 1.0 && move.cost > 0) {
+            costDisplay = `<s>${move.cost}</s> ${actualCost} DP`;
+        }
+
+        const bonusHtml = modifiers.bonusText ?
+            `<span class="move-bonus">${modifiers.bonusText}</span>` : '';
+
+        html += `
+            <button class="${btnClass}" data-move="${key}" ${isDisabled ? 'disabled' : ''}>
+                <span class="move-name">${move.name}</span>
+                <span class="move-desc">${move.description}</span>
+                <span class="${costClass}">${costDisplay}</span>
+                ${bonusHtml}
+            </button>
+        `;
+    }
+
+    elements.movesContainer.innerHTML = html;
+}
+
+// Execute a discussion move
+function executeMove(moveKey) {
+    const move = DISCUSSION_MOVES[moveKey];
+    const modifiers = getMoveModifiers(moveKey);
+    const cost = getMoveCost(moveKey);
+
+    // Check if can afford
+    if (gameState.discussionPoints < cost) {
+        showMessage('Not Enough DP', `You need ${cost} Discussion Points for ${move.name}.`, 'normal');
+        return false;
+    }
+
+    // Deduct cost
+    gameState.discussionPoints -= cost;
+
+    // Execute move-specific logic
+    switch (moveKey) {
+        case 'hotTake':
+            executeHotTake(move, modifiers);
+            break;
+        case 'deepDive':
+            executeDeepDive(move, modifiers);
+            break;
+        case 'devilsAdvocate':
+            executeDevilsAdvocate(move, modifiers);
+            break;
+        case 'didntFinish':
+            executeDidntFinish(move, modifiers);
+            break;
+        case 'remindsMe':
+            // This is handled separately via showBookSelector()
+            gameState.discussionPoints += cost; // Refund, will be charged after selection
+            showBookSelector();
+            return true;
+    }
+
+    // Check for discussion completion
+    const discussionRequired = getDiscussionRequired();
+    if (gameState.currentDiscussionProgress >= discussionRequired) {
+        completeDiscussion();
+    } else {
+        updateDisplay();
+    }
+
+    return true;
+}
+
+// Hot Take: 70% success for 2x, 30% fail for -25%
+function executeHotTake(move, modifiers) {
+    const successRate = move.successRate + modifiers.successBonus;
+    const roll = Math.random();
+
+    if (roll < successRate) {
+        // Success! 2x return
+        const bonus = move.cost * move.successBonus;
+        gameState.currentDiscussionProgress += bonus;
+        showMessage('Hot Take Success!', `Your bold opinion landed perfectly!<br><em>+${Math.floor(bonus)} discussion progress</em>`, 'special');
+    } else {
+        // Fail - lose 25% of cost from DP pool
+        const penalty = Math.floor(move.cost * move.failPenalty);
+        gameState.discussionPoints = Math.max(0, gameState.discussionPoints - penalty);
+        showMessage('Hot Take Backfired!', `That opinion was too spicy...<br><em>-${penalty} DP</em>`, 'normal');
+    }
+}
+
+// Deep Dive: Guaranteed 1.5x progress
+function executeDeepDive(move, modifiers) {
+    const cost = getMoveCost('deepDive');
+    const bonus = cost * move.progressBonus;
+
+    // Knowledge books get extra 25% progress
+    const currentBook = getCurrentBook();
+    let categoryBonus = 0;
+    if (currentBook.category === 'Knowledge') {
+        categoryBonus = bonus * 0.25;
+    }
+
+    const totalProgress = bonus + categoryBonus;
+    gameState.currentDiscussionProgress += totalProgress;
+
+    let message = `Thoughtful analysis pays off!<br><em>+${Math.floor(totalProgress)} discussion progress</em>`;
+    if (categoryBonus > 0) {
+        message += '<br><em>Knowledge book bonus!</em>';
+    }
+    showMessage('Deep Dive Complete!', message, 'special');
+}
+
+// Devil's Advocate: Generate DP and add progress
+function executeDevilsAdvocate(move, modifiers) {
+    // Generate DP
+    let dpGenerated = move.dpGenerated;
+
+    // High controversy books get +50% DP generated
+    const currentBook = getCurrentBook();
+    if (currentBook.controversy === 'high') {
+        dpGenerated = Math.floor(dpGenerated * 1.5);
+    }
+
+    gameState.discussionPoints += dpGenerated;
+
+    // Add progress
+    const progress = move.cost * move.progressBonus;
+    gameState.currentDiscussionProgress += progress;
+
+    let message = `Stirring the pot!<br><em>+${dpGenerated} DP, +${Math.floor(progress)} progress</em>`;
+    if (currentBook.controversy === 'high') {
+        message += '<br><em>Controversy bonus!</em>';
+    }
+    showMessage("Devil's Advocate!", message, 'special');
+}
+
+// Didn't Finish: Shameful but gives small progress, penalties for next clicks
+function executeDidntFinish(move, modifiers) {
+    // Small progress boost for honesty
+    gameState.currentDiscussionProgress += move.progressBonus;
+
+    // Apply penalty for next N clicks
+    gameState.didntFinishPenalty = move.penaltyDuration;
+
+    showMessage('"I didn\'t finish it..."', `Honesty is... something.<br><em>+${move.progressBonus} progress, but -50% DP for ${move.penaltyDuration} clicks</em>`, 'normal');
+}
+
+// Show book selector for "Reminds Me" move
+function showBookSelector() {
+    if (!elements.bookSelectorModal || !elements.bookSelectorList) return;
+
+    gameState.showingBookSelector = true;
+
+    // Get completed Stage 2 books (excluding current)
+    const completedBooks = gameState.booksCompleted
+        .filter(num => num > 25 && num < getCurrentBook().number)
+        .sort((a, b) => a - b);
+
+    if (completedBooks.length === 0) {
+        showMessage('No Books to Connect', 'You need to complete more books first!', 'normal');
+        gameState.showingBookSelector = false;
+        return;
+    }
+
+    let html = '';
+    for (const bookNum of completedBooks) {
+        const book = booksData.find(b => b.number === bookNum);
+        if (!book) continue;
+
+        html += `
+            <div class="book-option" data-book="${bookNum}">
+                <span class="book-option-title">#${bookNum} - ${book.title}</span>
+            </div>
+        `;
+    }
+
+    elements.bookSelectorList.innerHTML = html;
+    elements.bookSelectorModal.style.display = 'flex';
+}
+
+// Execute "Reminds Me" after book selection
+function executeRemindsMe(selectedBookNum) {
+    const move = DISCUSSION_MOVES.remindsMe;
+    const modifiers = getMoveModifiers('remindsMe');
+    const cost = getMoveCost('remindsMe');
+
+    // Deduct cost
+    if (gameState.discussionPoints < cost) {
+        showMessage('Not Enough DP', `You need ${cost} Discussion Points.`, 'normal');
+        hideBookSelector();
+        return;
+    }
+    gameState.discussionPoints -= cost;
+
+    // Calculate bonus
+    const currentBookIndex = gameState.currentBookIndex;
+    const selectedBookIndex = booksData.findIndex(b => b.number === selectedBookNum);
+    const distance = currentBookIndex - selectedBookIndex;
+    const baseBonus = cost * (1 + distance * move.distanceMultiplier);
+    const totalBonus = Math.floor(baseBonus * modifiers.effectMultiplier);
+
+    // Add progress
+    gameState.currentDiscussionProgress += totalBonus;
+
+    // Mark as used this book
+    gameState.usedRemindsMeThisBook = true;
+
+    const selectedBook = booksData.find(b => b.number === selectedBookNum);
+    showMessage('"This reminds me of..."', `Connection to "${selectedBook.title}"!<br><em>+${totalBonus} discussion progress</em>`, 'special');
+
+    hideBookSelector();
+
+    // Check for discussion completion
+    const discussionRequired = getDiscussionRequired();
+    if (gameState.currentDiscussionProgress >= discussionRequired) {
+        completeDiscussion();
+    } else {
+        updateDisplay();
+    }
+}
+
+// Hide book selector modal
+function hideBookSelector() {
+    if (elements.bookSelectorModal) {
+        elements.bookSelectorModal.style.display = 'none';
+    }
+    gameState.showingBookSelector = false;
+}
+
 // Show completion message
 function showMessage(title, text, type = 'normal') {
     const messageDiv = document.createElement('div');
@@ -601,8 +1007,24 @@ function handleReadClick() {
 
     // Stage 2 Discussion Phase - Generate DP and progress
     if (isDiscussionPhase()) {
-        // Add discussion points
-        const dpGained = gameState.discussionPointsPerClick * gameState.engagement;
+        // Track clicks for engagement quality
+        gameState.discussionClickCount++;
+
+        // Calculate DP gained
+        let dpMultiplier = gameState.engagement;
+
+        // James bonus: +10% DP efficiency
+        if (gameState.members.james.unlocked) {
+            dpMultiplier *= 1.1;
+        }
+
+        // Apply "didn't finish" penalty if active
+        if (gameState.didntFinishPenalty > 0) {
+            dpMultiplier *= 0.5;
+            gameState.didntFinishPenalty--;
+        }
+
+        const dpGained = gameState.discussionPointsPerClick * dpMultiplier;
         gameState.discussionPoints += dpGained;
 
         // Add to discussion progress (basic "I have thoughts" contributes directly)
@@ -782,6 +1204,16 @@ function updateDisplay() {
         }
     }
 
+    // Show/hide moves section (Stage 2 Discussion Phase only)
+    if (elements.movesSection) {
+        if (inDiscussion) {
+            elements.movesSection.style.display = 'block';
+            renderMoves();
+        } else {
+            elements.movesSection.style.display = 'none';
+        }
+    }
+
     // Update member recruit button states
     renderMembers();
 
@@ -825,6 +1257,10 @@ function saveGame() {
                 discussionPointsPerClick: gameState.discussionPointsPerClick,
                 currentDiscussionProgress: gameState.currentDiscussionProgress,
                 engagement: gameState.engagement,
+                discussionClickCount: gameState.discussionClickCount,
+                usedRemindsMeThisBook: gameState.usedRemindsMeThisBook,
+                didntFinishPenalty: gameState.didntFinishPenalty,
+                lastDiscussionQuality: gameState.lastDiscussionQuality,
                 careerExpertRuleUnlocked: gameState.careerExpertRuleUnlocked,
                 greenlightUnlocked: gameState.greenlightUnlocked,
                 globalMultiplier: gameState.globalMultiplier,
@@ -895,6 +1331,10 @@ function loadGame() {
         gameState.discussionPointsPerClick = saved.discussionPointsPerClick || 1;
         gameState.currentDiscussionProgress = saved.currentDiscussionProgress || 0;
         gameState.engagement = saved.engagement || 1.0;
+        gameState.discussionClickCount = saved.discussionClickCount || 0;
+        gameState.usedRemindsMeThisBook = saved.usedRemindsMeThisBook || false;
+        gameState.didntFinishPenalty = saved.didntFinishPenalty || 0;
+        gameState.lastDiscussionQuality = saved.lastDiscussionQuality || 'good';
         gameState.careerExpertRuleUnlocked = saved.careerExpertRuleUnlocked || false;
         gameState.greenlightUnlocked = saved.greenlightUnlocked || false;
         gameState.globalMultiplier = saved.globalMultiplier || 1.0;
@@ -1015,6 +1455,27 @@ async function init() {
             purchaseUpgrade(upgradeKey);
         }
     });
+
+    // Set up event delegation for moves container
+    elements.movesContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.move-btn:not(.disabled):not(.used)');
+        if (btn) {
+            const moveKey = btn.dataset.move;
+            executeMove(moveKey);
+        }
+    });
+
+    // Set up event delegation for book selector list
+    elements.bookSelectorList.addEventListener('click', (e) => {
+        const option = e.target.closest('.book-option');
+        if (option) {
+            const bookNum = parseInt(option.dataset.book, 10);
+            executeRemindsMe(bookNum);
+        }
+    });
+
+    // Set up cancel button for book selector modal
+    document.getElementById('book-selector-cancel')?.addEventListener('click', hideBookSelector);
 
     // Track when tab was hidden
     let hiddenAt = null;

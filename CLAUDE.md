@@ -177,23 +177,23 @@ Each book has hidden Discussion Potential:
 - [x] Phase 5.5: Stage 1 Complete state (stops book progress when all 25 books done)
 
 ### Stage 2 Implementation
-- [ ] **Phase 6: Stage 2 Core**
+- [x] **Phase 6: Stage 2 Core**
   - Stage detection (trigger after book 25 complete)
   - Reading phase vs Discussion phase split
   - Discussion Points (DP) resource and generation
   - UI updates: DP counter, phase indicator, button text changes ("READ" → "DISCUSS")
   - Add ~10 test books (26-35) to verify the loop works
 
-- [ ] **Phase 7: Discussion Mechanics**
+- [x] **Phase 7: Discussion Mechanics**
   - Discussion moves UI (buttons/panel for Hot Take, Deep Dive, etc.)
   - Discussion move logic and DP costs
   - Discussion threshold per book (how much DP needed to complete)
   - Engagement multiplier system (streak mechanic)
 
-- [ ] **Phase 8: Member Stage 2 Roles**
+- [x] **Phase 8: Member Stage 2 Roles** (implemented with Phase 7)
   - James: Moderator (prevents tangents, +10% DP efficiency)
   - Sydney: Analyst (Deep Dive -25% cost)
-  - Tiffany: Enthusiast (Hot Take +20% success)
+  - Tiffany: Enthusiast (Hot Take +20% success, base 40% → 60%)
   - Winslow: Connector ("This reminds me of..." bonus 2x)
   - Member bonuses apply during discussion phase
 
