@@ -15,6 +15,7 @@ An incremental clicker game celebrating a 10-year book club's journey through 16
 - `style.css` - Cozy library aesthetic (Libre Baskerville + Source Sans 3 fonts)
 - `game.js` - Game logic, state management, game loop
 - `books.json` - Book data (164 books from real book club history)
+- `assets/` - Member avatar images (96x96 PNG, pixel art style)
 - `CLAUDE.md` - This file
 
 ---
@@ -38,6 +39,8 @@ Click → Words → Pages → Complete Book → Unlock Members → Members Gener
 - `WORDS_PER_PAGE = 250`
 - Game loop: 10 FPS (100ms interval)
 - Auto-save: every 10 seconds
+- Notification duration: 9 seconds
+- Discussion move cooldown: 10 seconds
 - No offline progress (game pauses when tab hidden)
 
 ### Member Unlock Order (Stage 1)
@@ -74,6 +77,8 @@ The shift: You're no longer *reading*—your members handle that. Your job is to
 4. **Next Book**: Engagement multiplier carries forward (resets if discussion bombs).
 
 ### Discussion Moves
+All moves have a **10-second cooldown** after use.
+
 | Move | Cost | Effect |
 |------|------|--------|
 | "I have thoughts" | Free | Basic click, steady DP generation |
@@ -83,13 +88,31 @@ The shift: You're no longer *reading*—your members handle that. Your job is to
 | Devil's Advocate | 60 DP | Sparks debate. Extends discussion, generates more DP |
 | "I didn't finish it" | 0 DP | Shameful but honest. Reduced contribution |
 
-### Member Roles in Stage 2
+### Member Roles in Stage 2 (Core Members)
 | Member | Personality | Reading Bonus | Discussion Role |
 |--------|-------------|---------------|-----------------|
 | James | Loves sci-fi & self-improvement | 2x boost to others | **Moderator**: Prevents tangents, +10% DP efficiency |
 | Sydney | Loves literary fiction & beautiful prose | 2x on Knowledge | **Analyst**: Deep Dive -25% cost, finds hidden themes |
 | Tiffany | Best book pitches & recommendations | 2x on Fiction/Thriller | **Enthusiast**: Hot Take +20% success rate |
 | Winslow | Loves everything, always contributes | 1.5x on ALL | **Connector**: "This reminds me of..." bonus 2x |
+
+### Stage 2 Recruitable Members
+Additional members unlock throughout Stage 2. They cost DP to recruit and provide:
+- **+1 DP/second** passive generation (works with or without Group Chat)
+- **+5% engagement bonus** when recruited
+
+| Member | Unlocks | Cost (DP) |
+|--------|---------|-----------|
+| Jane | Book 30 | 100 |
+| Andrew | Book 40 | 150 |
+| Daniel | Book 50 | 200 |
+| Conner | Book 60 | 250 |
+| Megan | Book 70 | 300 |
+| Macy | Book 90 | 400 |
+| Andy | Book 110 | 500 |
+| Ben | Book 130 | 600 |
+| Paul | Book 150 | 750 |
+| Rachael | Book 160 | 1000 |
 
 ### Engagement System
 Engagement is a persistent multiplier between books:
@@ -146,7 +169,7 @@ Each book has hidden Discussion Potential:
 | Better Wifi | Reduce "Technical Difficulties" chance | 200 DP | 1 |
 | Book Club Historian | "This reminds me of..." works on ALL books | 300 DP | 1 |
 | Hot Take Insurance | Hot Takes can never result in DP loss | 500 DP | 1 |
-| The Group Chat | Members generate passive DP during discussions | 1000 DP | 1 |
+| The Group Chat | Members generate passive DP during discussions (also contributes to discussion progress for AFK completion) | 1000 DP | 1 |
 
 ---
 
