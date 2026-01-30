@@ -1256,6 +1256,100 @@ section h2 {
     50% { opacity: 0.6; }
 }
 
+/* ==================== Stage Transition Cutscene ==================== */
+
+.stage-cutscene-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+}
+
+.stage-cutscene-overlay.show {
+    opacity: 1;
+}
+
+.stage-cutscene-overlay.fade-out {
+    opacity: 0;
+    transition: opacity 0.8s ease;
+}
+
+.cutscene-text {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 4rem;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 8px;
+    text-align: center;
+    opacity: 0;
+    transform: scale(0.8);
+    /* Initial reveal, then continuous pulse */
+    animation:
+        cutsceneTextReveal 1.2s ease-out 0.2s forwards,
+        cutscenePulseFlash 0.4s ease-in-out 1.5s infinite,
+        cutsceneZoomBreath 3s ease-in-out 1.5s infinite;
+}
+
+/* Initial dramatic reveal */
+@keyframes cutsceneTextReveal {
+    0% {
+        opacity: 0;
+        transform: scale(0.6);
+    }
+    40% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    70% {
+        opacity: 1;
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Pulsing flash effect - like Universal Paperclips */
+@keyframes cutscenePulseFlash {
+    0%, 100% {
+        opacity: 1;
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+    50% {
+        opacity: 0.7;
+        text-shadow: 0 0 40px rgba(255, 255, 255, 0.6);
+    }
+}
+
+/* Subtle breathing zoom */
+@keyframes cutsceneZoomBreath {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Responsive cutscene text */
+@media (max-width: 600px) {
+    .cutscene-text {
+        font-size: 2.2rem;
+        letter-spacing: 4px;
+        padding: 0 20px;
+    }
+}
+
 /* ==================== Phase 12: Victory Screen ==================== */
 
 .victory-overlay {

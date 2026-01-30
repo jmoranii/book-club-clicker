@@ -1555,6 +1555,34 @@ function resetEventsForNewBook() {
 
 // ==================== END EVENTS SYSTEM ====================
 
+// ==================== STAGE TRANSITION CUTSCENE ====================
+
+function showStageTransitionCutscene(onComplete) {
+    const overlay = document.createElement('div');
+    overlay.className = 'stage-cutscene-overlay';
+    overlay.innerHTML = `
+        <div class="cutscene-text">NOW WE'RE TALKING</div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Trigger the animation
+    setTimeout(() => overlay.classList.add('show'), 50);
+
+    // Hold for 10 seconds, then fade out and call callback
+    setTimeout(() => {
+        overlay.classList.remove('show');
+        overlay.classList.add('fade-out');
+
+        setTimeout(() => {
+            overlay.remove();
+            if (onComplete) onComplete();
+        }, 800);
+    }, 10000);
+}
+
+// ==================== END STAGE TRANSITION CUTSCENE ====================
+
 // ==================== VICTORY SCREEN (Phase 12) ====================
 
 // Real Book Club Stats (from Book Club Read History.csv)
@@ -1939,12 +1967,13 @@ function handleSpecialBook(book) {
         case 'stage_transition':
             // Unlock Career Expert Rule
             gameState.careerExpertRuleUnlocked = true;
-            // Transition to Stage 2
-            gameState.stage = 2;
-            gameState.bookPhase = 'reading';
-            setTimeout(() => {
+            // Show the dramatic cutscene, then transition to Stage 2
+            showStageTransitionCutscene(() => {
+                gameState.stage = 2;
+                gameState.bookPhase = 'reading';
+                updateDisplay();
                 showMessage('STAGE 2 BEGINS!', 'The Discussion Era<br><em>Your members now auto-read. Click to facilitate discussions!</em>', 'transition');
-            }, 500);
+            });
             break;
 
         case 'the_bad_book':
