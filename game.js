@@ -754,7 +754,7 @@ function renderMembers() {
             // Recruited
             rowClass += ' recruited';
             checkbox = '☑';
-            avatar = `<img class="member-avatar" src="assets/${member.name}.jpg" alt="${member.name}">`;
+            avatar = `<img class="member-avatar" src="assets/${member.name}.png" alt="${member.name}">`;
             status = `<span class="member-pps">${formatNumber(member.currentPPS)} p/s</span>`;
         } else if (member.available) {
             // Available to recruit
