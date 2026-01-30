@@ -1557,52 +1557,201 @@ function resetEventsForNewBook() {
 
 // ==================== VICTORY SCREEN (Phase 12) ====================
 
+// Real Book Club Stats (from Book Club Read History.csv)
+const REAL_BOOK_CLUB_STATS = {
+    dateRange: 'November 2015 — January 2026',
+    totalReadingDays: 3258,
+    avgDaysPerBook: 23,
+
+    // Suggester leaderboard (all members)
+    suggesters: [
+        { name: 'Tiffany', books: 36 },
+        { name: 'Sydney', books: 27 },
+        { name: 'James', books: 27 },
+        { name: 'Winslow', books: 21 },
+        { name: 'Jane', books: 12 },
+        { name: 'Andrew', books: 4 },
+        { name: 'Kyle', books: 2 },
+        { name: 'Daniel', books: 2 },
+        { name: 'Conner', books: 2 },
+        { name: 'Others', books: 9 }
+    ],
+
+    // Reading records
+    longestRead: { title: 'George Washington: A Life', days: 63 },
+    shortestRead: { title: 'Media Package 2', days: 4 },
+
+    // Repeat authors
+    repeatAuthors: [
+        { name: 'Cal Newport', books: 3 },
+        { name: 'R.F. Kuang', books: 3 },
+        { name: 'Isabel Wilkerson', books: 2 },
+        { name: 'George Saunders', books: 2 },
+        { name: 'Erik Larson', books: 2 },
+        { name: 'Alex Michaelides', books: 2 }
+    ],
+
+    // Books by year
+    booksByYear: [
+        { year: 2015, count: 2 },
+        { year: 2016, count: 14 },
+        { year: 2017, count: 16 },
+        { year: 2018, count: 19 },
+        { year: 2019, count: 17 },
+        { year: 2020, count: 15 },
+        { year: 2021, count: 20 },
+        { year: 2022, count: 18 },
+        { year: 2023, count: 16 },
+        { year: 2024, count: 11 },
+        { year: 2025, count: 15 },
+        { year: 2026, count: 1 }
+    ]
+};
+
 function showVictoryScreen() {
     const stats = gameState.victoryStats;
+    const realStats = REAL_BOOK_CLUB_STATS;
+
+    // Format playtime
+    const playtimeMinutes = Math.floor(gameState.totalPlayTime / 60000);
+    const playtimeHours = Math.floor(playtimeMinutes / 60);
+    const playtimeRemaining = playtimeMinutes % 60;
+    const playtimeStr = playtimeHours > 0
+        ? `${playtimeHours}h ${playtimeRemaining}m`
+        : `${playtimeMinutes}m`;
+
+    // Generate suggester leaderboard HTML
+    const suggesterHTML = realStats.suggesters.map(s =>
+        `<div class="leaderboard-row">
+            <span class="leaderboard-name">${s.name}</span>
+            <span class="leaderboard-value">${s.books}</span>
+        </div>`
+    ).join('');
+
+    // Generate books by year chart with book emojis
+    const yearChartHTML = realStats.booksByYear.map(y => {
+        const books = '📖'.repeat(Math.ceil(y.count / 2)); // Scale down for display
+        const isPeak = y.count === 20;
+        return `<div class="year-row ${isPeak ? 'peak-year' : ''}">
+            <span class="year-label">${y.year}</span>
+            <span class="year-books">${books}</span>
+            <span class="year-count">(${y.count})</span>
+            ${isPeak ? '<span class="peak-badge">Peak!</span>' : ''}
+        </div>`;
+    }).join('');
+
+    // Generate repeat authors HTML
+    const authorsHTML = realStats.repeatAuthors.map(a =>
+        `<span class="author-tag">${a.name} (${a.books})</span>`
+    ).join('');
+
+    // McConaughey quote if greenlights unlocked
+    const mcconaugheyQuote = stats.greenlightUnlocked
+        ? `<div class="victory-mcconaughey">
+            <p>"Alright, alright, alright... keep readin'."</p>
+            <span class="quote-attribution">— Matthew McConaughey (probably)</span>
+           </div>`
+        : '';
 
     const overlay = document.createElement('div');
     overlay.className = 'victory-overlay';
     overlay.innerHTML = `
         <div class="victory-modal">
             <div class="victory-header">
-                <div class="victory-sparkles">&#10022; &#10022; &#10022;</div>
+                <div class="victory-sparkles">✦ ✦ ✦</div>
                 <h1>10 YEARS OF BOOK CLUB</h1>
-                <div class="victory-subtitle">The Journey is Complete</div>
+                <div class="victory-subtitle">${realStats.dateRange}</div>
+                <div class="victory-tagline">The game is complete. The journey continues.</div>
             </div>
 
-            <div class="victory-stats">
-                <div class="victory-stat">
-                    <span class="victory-stat-value">${stats.totalBooks}</span>
-                    <span class="victory-stat-label">Books Completed</span>
+            <div class="victory-section">
+                <h2>Your Game Stats</h2>
+                <div class="victory-stats">
+                    <div class="victory-stat">
+                        <span class="victory-stat-value">${stats.totalBooks}</span>
+                        <span class="victory-stat-label">Books</span>
+                    </div>
+                    <div class="victory-stat">
+                        <span class="victory-stat-value">${formatNumber(stats.totalWords)}</span>
+                        <span class="victory-stat-label">Words</span>
+                    </div>
+                    <div class="victory-stat">
+                        <span class="victory-stat-value">${formatNumber(stats.totalPages)}</span>
+                        <span class="victory-stat-label">Pages</span>
+                    </div>
+                    <div class="victory-stat">
+                        <span class="victory-stat-value">${formatNumber(stats.discussionPoints)}</span>
+                        <span class="victory-stat-label">DP Earned</span>
+                    </div>
+                    <div class="victory-stat">
+                        <span class="victory-stat-value">${playtimeStr}</span>
+                        <span class="victory-stat-label">Playtime</span>
+                    </div>
                 </div>
-                <div class="victory-stat">
-                    <span class="victory-stat-value">${formatNumber(stats.totalWords)}</span>
-                    <span class="victory-stat-label">Words Read</span>
-                </div>
-                <div class="victory-stat">
-                    <span class="victory-stat-value">${formatNumber(stats.totalPages)}</span>
-                    <span class="victory-stat-label">Pages Turned</span>
-                </div>
-                <div class="victory-stat">
-                    <span class="victory-stat-value">${formatNumber(stats.discussionPoints)}</span>
-                    <span class="victory-stat-label">Discussion Points</span>
+
+                <div class="victory-milestones">
+                    ${stats.badBookSurvived ? '<span class="milestone-badge">💪 Survived THE BAD BOOK</span>' : ''}
+                    ${stats.greenlightUnlocked ? '<span class="milestone-badge">🟢 Found the Green Lights</span>' : ''}
                 </div>
             </div>
 
-            <div class="victory-journey">
-                <h2>The Journey</h2>
-                <div class="journey-milestones">
-                    <div class="milestone">&#128214; Started with "The Lies of Locke Lamora"</div>
-                    <div class="milestone">&#128101; Recruited James, Sydney, Tiffany & Winslow</div>
-                    ${stats.badBookSurvived ? '<div class="milestone">&#128170; Survived "THE BAD BOOK"</div>' : ''}
-                    ${stats.greenlightUnlocked ? '<div class="milestone">&#128994; Found the Green Lights</div>' : ''}
-                    <div class="milestone">&#127942; Completed "Fight Right" - the finale</div>
+            <div class="victory-section real-stats-section">
+                <h2>Real Book Club Stats</h2>
+
+                <div class="real-stats-grid">
+                    <div class="real-stat">
+                        <span class="real-stat-value">${realStats.totalReadingDays.toLocaleString()}</span>
+                        <span class="real-stat-label">Total Days Reading</span>
+                    </div>
+                    <div class="real-stat">
+                        <span class="real-stat-value">~${realStats.avgDaysPerBook}</span>
+                        <span class="real-stat-label">Avg Days/Book</span>
+                    </div>
+                </div>
+
+                <div class="victory-subsection">
+                    <h3>📊 Suggester Leaderboard</h3>
+                    <div class="leaderboard">
+                        ${suggesterHTML}
+                    </div>
+                </div>
+
+                <div class="victory-subsection">
+                    <h3>🏆 Reading Records</h3>
+                    <div class="records-grid">
+                        <div class="record">
+                            <span class="record-label">Marathon Read</span>
+                            <span class="record-value">${realStats.longestRead.title}</span>
+                            <span class="record-detail">${realStats.longestRead.days} days</span>
+                        </div>
+                        <div class="record">
+                            <span class="record-label">Speed Run</span>
+                            <span class="record-value">${realStats.shortestRead.title}</span>
+                            <span class="record-detail">${realStats.shortestRead.days} days</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="victory-subsection">
+                    <h3>✍️ Club Favorite Authors</h3>
+                    <div class="authors-list">
+                        ${authorsHTML}
+                    </div>
+                </div>
+
+                <div class="victory-subsection">
+                    <h3>📅 Books by Year</h3>
+                    <div class="year-chart">
+                        ${yearChartHTML}
+                    </div>
                 </div>
             </div>
+
+            ${mcconaugheyQuote}
 
             <div class="victory-message">
-                <p><em>"168 books. Countless discussions. One amazing book club."</em></p>
-                <p>Thank you for playing Book Club Clicker!</p>
+                <p class="forward-message">168 books down. Infinite to go.</p>
+                <p class="thanks-message">Thank you for playing Book Club Clicker!</p>
             </div>
 
             <div class="victory-actions">

@@ -319,6 +319,37 @@ section h2 {
     color: var(--gold-light);
 }
 
+/* Compact Stats (top bar) */
+.stats-compact {
+    padding: 8px 15px;
+    margin-bottom: 15px;
+}
+
+.stats-compact .stats-grid {
+    gap: 8px 20px;
+    justify-content: center;
+}
+
+.stats-compact .stat {
+    flex: 0 0 auto;
+    min-width: auto;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-left: 2px solid var(--gold);
+}
+
+.stats-compact .stat-label {
+    font-size: 0.65rem;
+    display: inline;
+    margin-bottom: 0;
+}
+
+.stats-compact .stat-value {
+    font-size: 0.95rem;
+}
+
 /* Members Section */
 .members-section h2 {
     color: var(--burgundy);
@@ -1427,5 +1458,301 @@ section h2 {
 
     .victory-stat-value {
         font-size: 1.4rem;
+    }
+}
+
+/* Enhanced Victory Screen - Real Book Club Stats */
+.victory-tagline {
+    font-size: 1.1rem;
+    color: var(--forest-green);
+    margin-top: 12px;
+    font-weight: 600;
+}
+
+.victory-section {
+    margin: 25px 0;
+    text-align: left;
+}
+
+.victory-section h2 {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 1.1rem;
+    color: var(--leather-brown);
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.victory-stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(45, 74, 62, 0.08);
+    border-radius: 8px;
+}
+
+.victory-stat {
+    flex: 0 0 auto;
+    min-width: 80px;
+    text-align: center;
+}
+
+.victory-stat-value {
+    font-size: 1.4rem;
+}
+
+.victory-milestones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.milestone-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    background: linear-gradient(to bottom, var(--gold-light), var(--gold));
+    color: var(--leather-brown);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.real-stats-section {
+    background: var(--bg-parchment);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-soft);
+}
+
+.real-stats-grid {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+.real-stat {
+    text-align: center;
+}
+
+.real-stat-value {
+    display: block;
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--burgundy);
+}
+
+.real-stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.victory-subsection {
+    margin: 20px 0;
+}
+
+.victory-subsection h3 {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 0.95rem;
+    color: var(--leather-brown);
+    margin-bottom: 10px;
+}
+
+/* Suggester Leaderboard */
+.leaderboard {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+}
+
+.leaderboard-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.leaderboard-name {
+    color: var(--text-ink);
+}
+
+.leaderboard-value {
+    font-weight: 700;
+    color: var(--forest-green);
+}
+
+/* Reading Records */
+.records-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.record {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 6px;
+    text-align: center;
+}
+
+.record-label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+
+.record-value {
+    display: block;
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 0.85rem;
+    color: var(--leather-brown);
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.record-detail {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--burgundy);
+}
+
+/* Favorite Authors */
+.authors-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+.author-tag {
+    display: inline-block;
+    padding: 5px 10px;
+    background: var(--forest-green);
+    color: white;
+    border-radius: 15px;
+    font-size: 0.75rem;
+}
+
+/* Books by Year Chart */
+.year-chart {
+    font-size: 0.8rem;
+}
+
+.year-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.year-row:last-child {
+    border-bottom: none;
+}
+
+.year-label {
+    width: 40px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.year-books {
+    flex: 1;
+    font-size: 0.7rem;
+    letter-spacing: -2px;
+}
+
+.year-count {
+    width: 30px;
+    text-align: right;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.peak-year {
+    background: rgba(201, 162, 39, 0.15);
+    border-radius: 4px;
+    padding: 3px 5px;
+}
+
+.peak-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--gold);
+    text-transform: uppercase;
+}
+
+/* McConaughey Quote */
+.victory-mcconaughey {
+    margin: 20px 0;
+    padding: 15px;
+    background: linear-gradient(to right, rgba(45, 74, 62, 0.1), rgba(45, 74, 62, 0.05));
+    border-left: 3px solid var(--forest-green);
+    border-radius: 0 8px 8px 0;
+}
+
+.victory-mcconaughey p {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--forest-green);
+    margin: 0;
+}
+
+.quote-attribution {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 5px;
+}
+
+/* Victory Messages */
+.forward-message {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--leather-brown);
+}
+
+.thanks-message {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Victory Screen Mobile Adjustments */
+@media (max-width: 480px) {
+    .victory-modal {
+        max-height: 85vh;
+    }
+
+    .leaderboard {
+        grid-template-columns: 1fr;
+    }
+
+    .records-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .real-stats-grid {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .year-books {
+        font-size: 0.6rem;
     }
 }

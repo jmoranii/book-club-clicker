@@ -226,11 +226,11 @@ Each book has hidden Discussion Potential:
   - George Washington: A Life marked as marathon (book 78)
   - Book-specific flavor text and Easter eggs based on club history
 
-- [ ] **Phase 12: Special Books & Finale**
+- [x] **Phase 12: Special Books & Finale**
   - Book 62: Black Leopard, Red Wolf "THE BAD BOOK" special behavior
   - Book 100: Greenlights unlocks GREEN LIGHT events, McConaughey quotes
   - Book 168: Fight Right victory screen with 10-year stats
-  - Achievement system for special moments
+  - Achievement flags (badBookSurvived, greenlightUnlocked) tracked and shown in victory screen
 
 - [ ] **Phase 13: Polish & Deploy**
   - Remove dev tools (reset button, console logging)
