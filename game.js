@@ -1830,22 +1830,31 @@ function executeEveryoneReadIt(event) {
 
 // Controversial Opinion - 50/50 engagement change
 function executeControversialOpinion(event) {
-    const isPositive = Math.random() < 0.5;
+    let isPositive = Math.random() < 0.5;
     let messageText = event.messageText;
+    const changeAmount = event.effectValue;
+
+    // If at max engagement, force negative; if at min, force positive
+    // This ensures we always have a meaningful change
+    if (gameState.engagement >= 3.0) {
+        isPositive = false;
+    } else if (gameState.engagement <= 1.0) {
+        isPositive = true;
+    }
 
     if (isPositive) {
-        const bonus = event.effectValue;
         const oldEngagement = gameState.engagement;
-        gameState.engagement = Math.min(gameState.engagement + bonus, 3.0);
+        gameState.engagement = Math.min(gameState.engagement + changeAmount, 3.0);
         const gained = gameState.engagement - oldEngagement;
 
         messageText += `<br><em>It sparked great debate! +${(gained * 100).toFixed(0)}% engagement!</em>`;
         showMessage(event.messageTitle, messageText, 'event-chaotic-good');
     } else {
-        const penalty = event.effectValue;
-        gameState.engagement = Math.max(gameState.engagement - penalty, 1.0);
+        const oldEngagement = gameState.engagement;
+        gameState.engagement = Math.max(gameState.engagement - changeAmount, 1.0);
+        const lost = oldEngagement - gameState.engagement;
 
-        messageText += `<br><em>It killed the vibe... -${(penalty * 100).toFixed(0)}% engagement.</em>`;
+        messageText += `<br><em>It killed the vibe... -${(lost * 100).toFixed(0)}% engagement.</em>`;
         showMessage(event.messageTitle, messageText, 'event-chaotic-bad');
     }
 
