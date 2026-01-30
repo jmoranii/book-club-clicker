@@ -1581,14 +1581,14 @@ const REAL_BOOK_CLUB_STATS = {
     longestRead: { title: 'George Washington: A Life', days: 63 },
     shortestRead: { title: 'Media Package 2', days: 4 },
 
-    // Repeat authors
+    // Repeat authors (with Goodreads links)
     repeatAuthors: [
-        { name: 'Cal Newport', books: 3 },
-        { name: 'R.F. Kuang', books: 3 },
-        { name: 'Isabel Wilkerson', books: 2 },
-        { name: 'George Saunders', books: 2 },
-        { name: 'Erik Larson', books: 2 },
-        { name: 'Alex Michaelides', books: 2 }
+        { name: 'Cal Newport', books: 3, goodreads: 'https://www.goodreads.com/author/show/147891.Cal_Newport' },
+        { name: 'R.F. Kuang', books: 3, goodreads: 'https://www.goodreads.com/author/show/16820001.R_F_Kuang' },
+        { name: 'Isabel Wilkerson', books: 2, goodreads: 'https://www.goodreads.com/author/show/3567958.Isabel_Wilkerson' },
+        { name: 'George Saunders', books: 2, goodreads: 'https://www.goodreads.com/author/show/8885.George_Saunders' },
+        { name: 'Erik Larson', books: 2, goodreads: 'https://www.goodreads.com/author/show/5869.Erik_Larson' },
+        { name: 'Alex Michaelides', books: 2, goodreads: 'https://www.goodreads.com/author/show/17621440.Alex_Michaelides' }
     ],
 
     // Books by year
@@ -1642,7 +1642,7 @@ function showVictoryScreen() {
 
     // Generate repeat authors HTML
     const authorsHTML = realStats.repeatAuthors.map(a =>
-        `<span class="author-tag">${a.name} (${a.books})</span>`
+        `<a href="${a.goodreads}" target="_blank" rel="noopener" class="author-tag">${a.name} (${a.books})</a>`
     ).join('');
 
     // McConaughey quote if greenlights unlocked
@@ -1750,7 +1750,7 @@ function showVictoryScreen() {
             ${mcconaugheyQuote}
 
             <div class="victory-message">
-                <p class="forward-message">168 books down. Infinite to go.</p>
+                <p class="forward-message">168 books down. Plenty more to go.</p>
                 <p class="thanks-message">Thank you for playing Book Club Clicker!</p>
             </div>
 
