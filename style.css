@@ -387,6 +387,16 @@ section h2 {
     color: var(--forest-green);
 }
 
+.member-avatar {
+    height: 3em;
+    width: auto;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+    border: 2px solid var(--forest-green);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
 .member-name {
     font-weight: 600;
     flex: 1;

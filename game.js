@@ -748,10 +748,13 @@ function renderMembers() {
         let status = '';
         let action = '';
 
+        let avatar = '';
+
         if (member.unlocked) {
             // Recruited
             rowClass += ' recruited';
             checkbox = '☑';
+            avatar = `<img class="member-avatar" src="assets/${member.name}.jpg" alt="${member.name}">`;
             status = `<span class="member-pps">${formatNumber(member.currentPPS)} p/s</span>`;
         } else if (member.available) {
             // Available to recruit
@@ -773,6 +776,7 @@ function renderMembers() {
         html += `
             <div class="${rowClass}">
                 <span class="member-checkbox">${checkbox}</span>
+                ${avatar}
                 <span class="member-name">${member.name}</span>
                 ${status}
                 ${action}
