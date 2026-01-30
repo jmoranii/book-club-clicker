@@ -662,6 +662,161 @@ section h2 {
     50% { transform: translateY(0) scale(1.02); }
 }
 
+/* Event Message Styles (Phase 10) */
+
+/* Negative Events - Red/Warning theme */
+.message-event-negative {
+    border-color: #c44;
+    background: linear-gradient(to bottom, #fff5f5, var(--bg-cream));
+    position: relative;
+}
+
+.message-event-negative::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #c44, #e66, #c44);
+}
+
+.message-event-negative .message-title {
+    color: #a33;
+}
+
+.message-event-negative .message-text em {
+    color: #c44;
+}
+
+/* Positive Events - Green theme */
+.message-event-positive {
+    border-color: var(--forest-green);
+    background: linear-gradient(to bottom, #f5fff5, var(--bg-cream));
+    position: relative;
+}
+
+.message-event-positive::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--forest-green), #5a9a6a, var(--forest-green));
+}
+
+.message-event-positive .message-title {
+    color: var(--forest-dark);
+}
+
+.message-event-positive .message-text em {
+    color: var(--forest-green);
+}
+
+/* Chaotic Events - Purple theme */
+.message-event-chaotic {
+    border-color: #8b5cf6;
+    background: linear-gradient(to bottom, #faf5ff, var(--bg-cream));
+    position: relative;
+}
+
+.message-event-chaotic::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa, #8b5cf6);
+}
+
+.message-event-chaotic .message-title {
+    color: #7c3aed;
+}
+
+/* Chaotic Good - Green-tinted */
+.message-event-chaotic-good {
+    border-color: #22c55e;
+    background: linear-gradient(to bottom, #f0fdf4, var(--bg-cream));
+}
+
+.message-event-chaotic-good::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #22c55e, #4ade80, #22c55e);
+}
+
+.message-event-chaotic-good .message-title {
+    color: #16a34a;
+}
+
+.message-event-chaotic-good .message-text em {
+    color: #22c55e;
+}
+
+/* Chaotic Bad - Red-tinted */
+.message-event-chaotic-bad {
+    border-color: #ef4444;
+    background: linear-gradient(to bottom, #fef2f2, var(--bg-cream));
+}
+
+.message-event-chaotic-bad::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ef4444, #f87171, #ef4444);
+}
+
+.message-event-chaotic-bad .message-title {
+    color: #dc2626;
+}
+
+.message-event-chaotic-bad .message-text em {
+    color: #ef4444;
+}
+
+/* Special Events - Gold celebration */
+.message-event-special {
+    border-color: var(--gold);
+    border-width: 3px;
+    background: linear-gradient(to bottom, #fffef0, var(--bg-cream));
+    position: relative;
+    animation: special-glow 1s ease-in-out infinite alternate;
+}
+
+.message-event-special::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+}
+
+.message-event-special .message-title {
+    color: var(--leather-brown);
+    font-size: 1.2rem;
+}
+
+.message-event-special .message-text em {
+    color: var(--gold);
+    font-weight: 600;
+}
+
+@keyframes special-glow {
+    0% { box-shadow: 0 4px 20px rgba(201, 162, 39, 0.3); }
+    100% { box-shadow: 0 4px 30px rgba(201, 162, 39, 0.5); }
+}
+
 /* Subtle animations */
 @keyframes pulse-gold {
     0%, 100% { opacity: 1; }

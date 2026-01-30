@@ -3,7 +3,7 @@
 // Constants
 const WORDS_PER_PAGE = 250;
 const SAVE_KEY = 'bookClubClickerSave';
-const SAVE_VERSION = 3; // Bumped for Phase 9 (Stage 2 Upgrades)
+const SAVE_VERSION = 4; // Bumped for Phase 10 (Events System)
 const AUTO_SAVE_INTERVAL = 10000; // 10 seconds
 
 // Discussion Move Definitions
@@ -43,6 +43,103 @@ const DISCUSSION_MOVES = {
         progressBonus: 10,
         penaltyMultiplier: 0.5,
         penaltyDuration: 10
+    }
+};
+
+// Discussion Event Definitions (Phase 10)
+const DISCUSSION_EVENTS = {
+    // Negative Events
+    technicalDifficulties: {
+        name: 'Technical Difficulties',
+        type: 'negative',
+        messageTitle: "You're On Mute!",
+        messageText: "Someone forgot to unmute. Discussion paused briefly.",
+        effect: 'pauseDiscussion',
+        effectValue: 3, // seconds
+        baseProbability: 0.08,
+        canRepeat: true,
+        cooldownSeconds: 30,
+        preventedBy: null,
+        reducedBy: 'betterWifi'
+    },
+    theTangent: {
+        name: 'The Tangent',
+        type: 'negative',
+        messageTitle: 'The Tangent!',
+        messageText: "Someone went completely off-topic. The discussion spiraled.",
+        effect: 'costDP',
+        effectValue: 50,
+        baseProbability: 0.05,
+        canRepeat: true,
+        cooldownSeconds: 45,
+        preventedBy: 'james'
+    },
+    scheduleConflict: {
+        name: 'Schedule Conflict',
+        type: 'negative',
+        messageTitle: 'Schedule Conflict!',
+        messageText: "{memberName} couldn't make it this week.",
+        effect: 'disableMember',
+        baseProbability: 0.03,
+        canRepeat: false
+    },
+    cameraOffEnergy: {
+        name: 'Camera Off Energy',
+        type: 'negative',
+        messageTitle: 'Camera Off Energy',
+        messageText: "Everyone has their cameras off. The energy is low.",
+        effect: 'reduceClickPower',
+        effectValue: 0.75, // 25% reduction
+        baseProbability: 0.04,
+        canRepeat: false
+    },
+
+    // Positive Events
+    thePerfectTake: {
+        name: 'The Perfect Take',
+        type: 'positive',
+        messageTitle: 'The Perfect Take!',
+        messageText: "Someone absolutely nailed it. The group is energized!",
+        effect: 'instantProgress',
+        effectValue: 0.5, // 50% of remaining progress
+        baseProbability: 0.04,
+        canRepeat: false
+    },
+    everyoneActuallyReadIt: {
+        name: 'Everyone Actually Read It',
+        type: 'positive',
+        messageTitle: 'A Miracle!',
+        messageText: "Everyone actually finished the book this week!",
+        effect: 'boostEngagement',
+        effectValue: 0.25, // +25% engagement
+        baseProbability: 0.02,
+        canRepeat: false
+    },
+
+    // Chaotic Events
+    controversialOpinion: {
+        name: 'Controversial Opinion',
+        type: 'chaotic',
+        messageTitle: 'Controversial Opinion!',
+        messageText: "Someone dropped a hot take...",
+        effect: 'engagementGamble',
+        effectValue: 0.3, // +/- 30%
+        baseProbability: 0.06,
+        canRepeat: true,
+        cooldownSeconds: 60,
+        controversyMultiplier: 2.0 // 2x on high/max controversy
+    },
+
+    // Special Events
+    inPersonMeetup: {
+        name: 'In-Person Meetup',
+        type: 'special',
+        messageTitle: 'IN-PERSON MEETUP!',
+        messageText: "The book club meets IRL! Everything is better in person.",
+        effect: 'dpMultiplier',
+        effectValue: 3.0,
+        triggerBooks: [50, 100, 140, 168],
+        baseProbability: 0
     }
 };
 
@@ -135,6 +232,23 @@ const gameState = {
     // Special unlocks
     careerExpertRuleUnlocked: false,
     greenlightUnlocked: false,
+
+    // Events state (Phase 10)
+    events: {
+        occurredThisBook: [],      // Event IDs that happened this book
+        lastOccurrence: {},        // eventId -> timestamp
+        lastEventCheck: 0,         // Last check timestamp
+        eventCheckInterval: 5000,  // Check every 5 seconds
+        activeEffects: {
+            discussionPaused: false,
+            pauseEndTime: 0,
+            memberDisabled: null,
+            clickPowerMultiplier: 1.0,
+            dpMultiplier: 1.0,
+            tangentRefocusCost: 0
+        },
+        inPersonMeetupActive: false
+    },
 
     // Upgrades (Stage 1)
     upgrades: {
@@ -442,6 +556,7 @@ function completeDiscussion() {
     gameState.discussionClickCount = 0;
     gameState.usedRemindsMeThisBook = false;
     gameState.didntFinishPenalty = 0;
+    resetEventsForNewBook(); // Reset events state
 
     // Advance to next book
     if (gameState.currentBookIndex < booksData.length - 1) {
@@ -1062,6 +1177,295 @@ function hideBookSelector() {
     gameState.showingBookSelector = false;
 }
 
+// ==================== EVENTS SYSTEM (Phase 10) ====================
+
+// Check if an event can trigger (cooldown, repeats, prevention)
+function canEventTrigger(eventId) {
+    const event = DISCUSSION_EVENTS[eventId];
+    const eventState = gameState.events;
+
+    // Non-repeating already occurred?
+    if (!event.canRepeat && eventState.occurredThisBook.includes(eventId)) {
+        return false;
+    }
+
+    // Cooldown check
+    if (event.cooldownSeconds > 0) {
+        const lastTime = eventState.lastOccurrence[eventId] || 0;
+        if (Date.now() - lastTime < event.cooldownSeconds * 1000) {
+            return false;
+        }
+    }
+
+    // Prevented by member?
+    if (event.preventedBy && gameState.members[event.preventedBy]?.unlocked) {
+        return false;
+    }
+
+    return true;
+}
+
+// Calculate actual probability for an event
+function calculateEventProbability(eventId) {
+    const event = DISCUSSION_EVENTS[eventId];
+    let prob = event.baseProbability;
+
+    // Better Wifi reduces Technical Difficulties
+    if (event.reducedBy === 'betterWifi' &&
+        gameState.stage2Upgrades.betterWifi.level > 0) {
+        prob *= gameState.stage2Upgrades.betterWifi.effect; // 0.5 = 50% reduction
+    }
+
+    // Controversy affects chaotic events
+    if (event.controversyMultiplier) {
+        const controversy = getCurrentBook().controversy;
+        if (controversy === 'high' || controversy === 'maximum') {
+            prob *= event.controversyMultiplier;
+        }
+    }
+
+    return prob;
+}
+
+// Main event check function - called periodically during discussion phase
+function checkForEvents() {
+    if (!isDiscussionPhase()) return;
+    if (gameState.events.activeEffects.discussionPaused) return;
+
+    const now = Date.now();
+    if (now - gameState.events.lastEventCheck < gameState.events.eventCheckInterval) {
+        return;
+    }
+    gameState.events.lastEventCheck = now;
+
+    // Check special events first (guaranteed at specific books)
+    checkSpecialEvents();
+
+    // Roll for random events (one per check max)
+    const eventOrder = [
+        'technicalDifficulties', 'theTangent', 'scheduleConflict',
+        'cameraOffEnergy', 'thePerfectTake', 'everyoneActuallyReadIt',
+        'controversialOpinion'
+    ];
+
+    for (const eventId of eventOrder) {
+        if (!canEventTrigger(eventId)) continue;
+        if (Math.random() < calculateEventProbability(eventId)) {
+            executeEvent(eventId);
+            return; // Only one event per check
+        }
+    }
+}
+
+// Check for special book-triggered events
+function checkSpecialEvents() {
+    const currentBook = getCurrentBook();
+
+    // In-Person Meetup check
+    const meetupEvent = DISCUSSION_EVENTS.inPersonMeetup;
+    if (meetupEvent.triggerBooks.includes(currentBook.number)) {
+        if (!gameState.events.occurredThisBook.includes('inPersonMeetup')) {
+            executeEvent('inPersonMeetup');
+        }
+    }
+}
+
+// Main event execution dispatcher
+function executeEvent(eventId) {
+    const event = DISCUSSION_EVENTS[eventId];
+
+    // Mark as occurred
+    gameState.events.occurredThisBook.push(eventId);
+    gameState.events.lastOccurrence[eventId] = Date.now();
+
+    // Execute effect based on type
+    switch (event.effect) {
+        case 'pauseDiscussion':
+            executePauseDiscussion(event);
+            break;
+        case 'costDP':
+            executeTangent(event);
+            break;
+        case 'disableMember':
+            executeScheduleConflict(event);
+            break;
+        case 'reduceClickPower':
+            executeCameraOffEnergy(event);
+            break;
+        case 'instantProgress':
+            executePerfectTake(event);
+            break;
+        case 'boostEngagement':
+            executeEveryoneReadIt(event);
+            break;
+        case 'engagementGamble':
+            executeControversialOpinion(event);
+            break;
+        case 'dpMultiplier':
+            executeInPersonMeetup(event);
+            break;
+    }
+
+    saveGame();
+}
+
+// Technical Difficulties - pause discussion briefly
+function executePauseDiscussion(event) {
+    gameState.events.activeEffects.discussionPaused = true;
+    gameState.events.activeEffects.pauseEndTime = Date.now() + (event.effectValue * 1000);
+
+    showMessage(event.messageTitle, event.messageText, 'event-negative');
+
+    // Auto-resume after duration
+    setTimeout(() => {
+        gameState.events.activeEffects.discussionPaused = false;
+        showMessage('Connection Restored', 'Discussion can continue!', 'normal');
+    }, event.effectValue * 1000);
+}
+
+// The Tangent - costs DP to refocus (James prevents entirely)
+function executeTangent(event) {
+    gameState.events.activeEffects.tangentRefocusCost = event.effectValue;
+
+    showMessage(
+        event.messageTitle,
+        `${event.messageText}<br><em>Click to refocus: -${event.effectValue} DP</em>`,
+        'event-negative'
+    );
+}
+
+// Schedule Conflict - disable a random member for this book
+function executeScheduleConflict(event) {
+    const unlockedMembers = Object.entries(gameState.members)
+        .filter(([key, member]) => member.unlocked);
+
+    if (unlockedMembers.length === 0) return;
+
+    // Pick a random unlocked member
+    const randomIndex = Math.floor(Math.random() * unlockedMembers.length);
+    const [memberKey, member] = unlockedMembers[randomIndex];
+
+    gameState.events.activeEffects.memberDisabled = memberKey;
+
+    const messageText = event.messageText.replace('{memberName}', member.name);
+    showMessage(
+        event.messageTitle,
+        `${messageText}<br><em>${member.name}'s bonuses won't apply this book.</em>`,
+        'event-negative'
+    );
+}
+
+// Camera Off Energy - reduce click power for this book
+function executeCameraOffEnergy(event) {
+    gameState.events.activeEffects.clickPowerMultiplier = event.effectValue;
+
+    showMessage(
+        event.messageTitle,
+        `${event.messageText}<br><em>-25% click power for this discussion.</em>`,
+        'event-negative'
+    );
+}
+
+// The Perfect Take - instant 50% of remaining progress
+function executePerfectTake(event) {
+    const discussionRequired = getDiscussionRequired();
+    const remaining = discussionRequired - gameState.currentDiscussionProgress;
+    const bonus = Math.floor(remaining * event.effectValue);
+
+    gameState.currentDiscussionProgress += bonus;
+
+    showMessage(
+        event.messageTitle,
+        `${event.messageText}<br><em>+${bonus} discussion progress!</em>`,
+        'event-positive'
+    );
+
+    // Check for completion
+    if (gameState.currentDiscussionProgress >= discussionRequired) {
+        completeDiscussion();
+    } else {
+        updateDisplay();
+    }
+}
+
+// Everyone Actually Read It - boost engagement
+function executeEveryoneReadIt(event) {
+    const oldEngagement = gameState.engagement;
+    gameState.engagement = Math.min(gameState.engagement + event.effectValue, 3.0);
+    const gained = gameState.engagement - oldEngagement;
+
+    showMessage(
+        event.messageTitle,
+        `${event.messageText}<br><em>+${(gained * 100).toFixed(0)}% engagement!</em>`,
+        'event-positive'
+    );
+
+    updateDisplay();
+}
+
+// Controversial Opinion - 50/50 engagement change
+function executeControversialOpinion(event) {
+    const isPositive = Math.random() < 0.5;
+    let messageText = event.messageText;
+
+    if (isPositive) {
+        const bonus = event.effectValue;
+        const oldEngagement = gameState.engagement;
+        gameState.engagement = Math.min(gameState.engagement + bonus, 3.0);
+        const gained = gameState.engagement - oldEngagement;
+
+        messageText += `<br><em>It sparked great debate! +${(gained * 100).toFixed(0)}% engagement!</em>`;
+        showMessage(event.messageTitle, messageText, 'event-chaotic-good');
+    } else {
+        const penalty = event.effectValue;
+        gameState.engagement = Math.max(gameState.engagement - penalty, 1.0);
+
+        messageText += `<br><em>It killed the vibe... -${(penalty * 100).toFixed(0)}% engagement.</em>`;
+        showMessage(event.messageTitle, messageText, 'event-chaotic-bad');
+    }
+
+    updateDisplay();
+}
+
+// In-Person Meetup - 3x DP generation for this book
+function executeInPersonMeetup(event) {
+    gameState.events.activeEffects.dpMultiplier = event.effectValue;
+    gameState.events.inPersonMeetupActive = true;
+
+    const currentBook = getCurrentBook();
+    let specialNote = '';
+
+    if (currentBook.number === 100) {
+        specialNote = '<br><em>Book #100! Alright, alright, alright...</em>';
+    } else if (currentBook.number === 168) {
+        specialNote = '<br><em>THE FINALE! 10 years of book club!</em>';
+    }
+
+    showMessage(
+        event.messageTitle,
+        `${event.messageText}<br><em>3x DP generation this book!</em>${specialNote}`,
+        'event-special'
+    );
+
+    updateDisplay();
+}
+
+// Reset events state for new book
+function resetEventsForNewBook() {
+    gameState.events.occurredThisBook = [];
+    gameState.events.activeEffects = {
+        discussionPaused: false,
+        pauseEndTime: 0,
+        memberDisabled: null,
+        clickPowerMultiplier: 1.0,
+        dpMultiplier: 1.0,
+        tangentRefocusCost: 0
+    };
+    gameState.events.inPersonMeetupActive = false;
+}
+
+// ==================== END EVENTS SYSTEM ====================
+
 // Show completion message
 function showMessage(title, text, type = 'normal') {
     const messageDiv = document.createElement('div');
@@ -1164,14 +1568,40 @@ function handleReadClick() {
 
     // Stage 2 Discussion Phase - Generate DP and progress
     if (isDiscussionPhase()) {
+        // Check if discussion is paused (Technical Difficulties)
+        if (gameState.events.activeEffects.discussionPaused) {
+            showMessage('Connection Issues', 'Wait for the connection to restore...', 'normal');
+            return;
+        }
+
+        // Handle Tangent refocus cost
+        if (gameState.events.activeEffects.tangentRefocusCost > 0) {
+            const cost = gameState.events.activeEffects.tangentRefocusCost;
+            if (gameState.discussionPoints >= cost) {
+                gameState.discussionPoints -= cost;
+                gameState.events.activeEffects.tangentRefocusCost = 0;
+                showMessage('Refocused!', `The discussion is back on track. (-${cost} DP)`, 'normal');
+                updateDisplay();
+            } else {
+                showMessage('Not Enough DP', `You need ${cost} DP to refocus the tangent.`, 'normal');
+            }
+            return;
+        }
+
         // Track clicks for engagement quality
         gameState.discussionClickCount++;
 
         // Calculate DP gained
         let dpMultiplier = gameState.engagement;
 
-        // James bonus: +10% DP efficiency
-        if (gameState.members.james.unlocked) {
+        // Apply In-Person Meetup multiplier
+        dpMultiplier *= gameState.events.activeEffects.dpMultiplier;
+
+        // Apply Camera Off Energy reduction
+        dpMultiplier *= gameState.events.activeEffects.clickPowerMultiplier;
+
+        // James bonus: +10% DP efficiency (if not disabled by Schedule Conflict)
+        if (gameState.members.james.unlocked && gameState.events.activeEffects.memberDisabled !== 'james') {
             dpMultiplier *= 1.1;
         }
 
@@ -1451,6 +1881,19 @@ function saveGame() {
             };
         }
 
+        // Save events state (Phase 10)
+        saveData.gameState.events = {
+            occurredThisBook: gameState.events.occurredThisBook,
+            lastOccurrence: gameState.events.lastOccurrence,
+            activeEffects: {
+                memberDisabled: gameState.events.activeEffects.memberDisabled,
+                clickPowerMultiplier: gameState.events.activeEffects.clickPowerMultiplier,
+                dpMultiplier: gameState.events.activeEffects.dpMultiplier
+                // Don't save paused/tangent - temporary effects
+            },
+            inPersonMeetupActive: gameState.events.inPersonMeetupActive
+        };
+
         localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
         gameState.lastSaveTime = Date.now();
         console.log('Game saved');
@@ -1542,6 +1985,19 @@ function loadGame() {
             gameState.discussionPointsPerClick = 1 + guideLevel;
         }
 
+        // Restore events state (Phase 10)
+        if (saved.events) {
+            gameState.events.occurredThisBook = saved.events.occurredThisBook || [];
+            gameState.events.lastOccurrence = saved.events.lastOccurrence || {};
+            gameState.events.inPersonMeetupActive = saved.events.inPersonMeetupActive || false;
+
+            if (saved.events.activeEffects) {
+                gameState.events.activeEffects.memberDisabled = saved.events.activeEffects.memberDisabled || null;
+                gameState.events.activeEffects.clickPowerMultiplier = saved.events.activeEffects.clickPowerMultiplier || 1.0;
+                gameState.events.activeEffects.dpMultiplier = saved.events.activeEffects.dpMultiplier || 1.0;
+            }
+        }
+
         // No offline progress - game only progresses when tab is active
 
         console.log('Game loaded successfully');
@@ -1573,16 +2029,30 @@ function gameLoop() {
     // In Stage 2 Discussion Phase, members don't generate pages
     // (The book has been read, now we're discussing)
     if (isDiscussionPhase()) {
+        // Check for random events
+        checkForEvents();
+
+        // If discussion is paused (Technical Difficulties), don't generate passive DP
+        if (gameState.events.activeEffects.discussionPaused) {
+            updateStatsDisplay();
+            return;
+        }
+
         // Group Chat upgrade: members generate passive DP
         if (gameState.stage2Upgrades.theGroupChat.level > 0) {
-            const unlockedMembers = Object.values(gameState.members).filter(m => m.unlocked).length;
+            // Count unlocked members, excluding disabled member from Schedule Conflict
+            let unlockedMembers = Object.entries(gameState.members)
+                .filter(([key, m]) => m.unlocked && key !== gameState.events.activeEffects.memberDisabled)
+                .length;
 
             // Base: 0.1 DP per second, plus 0.1 per unlocked member, multiplied by engagement
-            // (You're always in the group chat, members add to it)
             let dpRate = gameState.stage2Upgrades.theGroupChat.effect * (1 + unlockedMembers) * gameState.engagement;
 
-            // James bonus: +10% DP efficiency
-            if (gameState.members.james.unlocked) {
+            // Apply In-Person Meetup multiplier
+            dpRate *= gameState.events.activeEffects.dpMultiplier;
+
+            // James bonus: +10% DP efficiency (if not disabled)
+            if (gameState.members.james.unlocked && gameState.events.activeEffects.memberDisabled !== 'james') {
                 dpRate *= 1.1;
             }
 
@@ -1744,6 +2214,110 @@ function resetGame() {
         location.reload();
     }
 }
+
+// ============================================
+// DEV TOOLS FOR TESTING (remove before release)
+// ============================================
+
+// List all available event IDs
+window.listEvents = function() {
+    console.log('Available events:');
+    Object.keys(DISCUSSION_EVENTS).forEach(id => {
+        const event = DISCUSSION_EVENTS[id];
+        console.log(`  ${id} (${event.type}) - ${event.name}`);
+    });
+    console.log('\nUsage: triggerEvent("eventId")');
+    console.log('Other commands: goToDiscussion(), skipToBook(num), giveDP(amount)');
+};
+
+// Manually trigger an event
+window.triggerEvent = function(eventId) {
+    if (!DISCUSSION_EVENTS[eventId]) {
+        console.error(`Unknown event: ${eventId}`);
+        console.log('Use listEvents() to see available events');
+        return;
+    }
+
+    if (!isDiscussionPhase()) {
+        console.warn('Not in discussion phase. Use goToDiscussion() first.');
+        return;
+    }
+
+    console.log(`Triggering event: ${eventId}`);
+    executeEvent(eventId);
+};
+
+// Skip to discussion phase
+window.goToDiscussion = function() {
+    if (gameState.currentStage !== 2) {
+        console.error('Must be in Stage 2. Use skipToBook(26) first.');
+        return;
+    }
+
+    // Complete reading phase instantly
+    const book = getCurrentBook();
+    if (book) {
+        gameState.currentPages = book.pages;
+        gameState.isDiscussionPhase = true;
+        gameState.currentDiscussionProgress = 0;
+        updateDisplay();
+        console.log('Now in discussion phase for:', book.title);
+    }
+};
+
+// Skip to a specific book number
+window.skipToBook = function(bookNum) {
+    if (bookNum < 1 || bookNum > 168) {
+        console.error('Book number must be 1-168');
+        return;
+    }
+
+    gameState.currentBookIndex = bookNum - 1;
+    gameState.currentPages = 0;
+    gameState.currentDiscussionProgress = 0;
+    gameState.isDiscussionPhase = false;
+
+    // Reset events for new book
+    resetEventsForNewBook();
+
+    // Switch stages if needed
+    if (bookNum >= 26 && gameState.currentStage === 1) {
+        gameState.currentStage = 2;
+        console.log('Switched to Stage 2');
+    }
+
+    updateDisplay();
+    saveGame();
+    console.log(`Skipped to book #${bookNum}: ${getCurrentBook()?.title}`);
+};
+
+// Give discussion points
+window.giveDP = function(amount = 1000) {
+    gameState.discussionPoints += amount;
+    updateDisplay();
+    saveGame();
+    console.log(`Added ${amount} DP. Total: ${gameState.discussionPoints}`);
+};
+
+// Show current event state
+window.eventState = function() {
+    console.log('Current event state:', JSON.stringify(gameState.events, null, 2));
+};
+
+// Clear all active event effects
+window.clearEventEffects = function() {
+    gameState.events.activeEffects = {
+        discussionPaused: false,
+        pauseEndTime: 0,
+        memberDisabled: null,
+        clickPowerMultiplier: 1.0,
+        dpMultiplier: 1.0,
+        tangentRefocusCost: 0
+    };
+    gameState.events.inPersonMeetupActive = false;
+    updateDisplay();
+    console.log('Event effects cleared');
+};
 
 // Start when DOM is ready
 document.addEventListener('DOMContentLoaded', init);

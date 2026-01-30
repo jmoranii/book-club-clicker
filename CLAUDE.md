@@ -205,13 +205,13 @@ Each book has hidden Discussion Potential:
   - Hot Take Insurance (Hot Takes can't result in DP loss)
   - The Group Chat (members generate passive DP during discussions)
 
-- [ ] **Phase 10: Events System**
-  - Random event triggers during discussions
-  - Event UI (messages, visual effects)
-  - Negative events: Technical Difficulties, The Tangent, Hot Take Gone Wrong, Schedule Conflict, Camera Off Energy
-  - Positive events: The Perfect Take, Everyone Actually Read It
-  - Chaotic events: Controversial Opinion, The Reread Suggestion
-  - In-person meetups at milestone books (50, 100, 140, 168)
+- [x] **Phase 10: Events System**
+  - Random event triggers during discussions (every 5 seconds check)
+  - Event UI with styled messages (negative=red, positive=green, chaotic=purple, special=gold)
+  - Negative events: Technical Difficulties (pauses 3s, Better Wifi reduces), The Tangent (50 DP cost, James prevents), Schedule Conflict (disables random member), Camera Off Energy (-25% click power)
+  - Positive events: The Perfect Take (+50% remaining progress), Everyone Actually Read It (+25% engagement)
+  - Chaotic events: Controversial Opinion (50/50 for +30% or -30% engagement, 2x on high controversy)
+  - Special events: In-Person Meetup at books 50, 100, 140, 168 (3x DP generation)
 
 - [x] **Phase 11: Full Book Data**
   - All 164 books from real book club CSV added to books.json
