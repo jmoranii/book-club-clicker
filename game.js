@@ -181,13 +181,24 @@ const DISCUSSION_EVENTS = {
     }
 };
 
-// McConaughey quotes for GREEN LIGHT events
+// McConaughey quotes for GREEN LIGHT events (from Greenlights bumper stickers)
 const MCCONAUGHEY_QUOTES = [
     "Alright, alright, alright...",
     "Just keep livin'.",
-    "Life's barely long enough to get good at one thing.",
-    "Sometimes you gotta go back to actually move forward.",
-    "Green lights are freedom, man."
+    "Words are momentary. Intent is momentous.",
+    "Hope has got a higher return on happiness.",
+    "Style is knowing who you are, what you want to say, and not giving a damn.",
+    "Want her, don't need her.",
+    "One in a row. Any success takes one in a row.",
+    "Kiss the fire and walk away whistling.",
+    "Once you know it's black, it's not as dark.",
+    "An honest man's pillow is his peace of mind.",
+    "Truth is like a jalapeño: the closer you get to the root, the hotter it gets.",
+    "If you are high enough, the sun is always shining.",
+    "Educate before you indict.",
+    "It's not a risk unless you can lose the fight.",
+    "Man is never more masculine than after the birth of his first child.",
+    "We don't live longer when we try not to die, we live longer when we are too busy living."
 ];
 
 // Game pause state (for when tab is hidden)
@@ -2074,8 +2085,8 @@ function showVictoryScreen() {
     // McConaughey quote if greenlights unlocked
     const mcconaugheyQuote = stats.greenlightUnlocked
         ? `<div class="victory-mcconaughey">
-            <p>"Alright, alright, alright... keep readin'."</p>
-            <span class="quote-attribution">— Matthew McConaughey (probably)</span>
+            <p>"Just keep readin'."</p>
+            <span class="quote-attribution">— Matthew McConaughey (adapted)</span>
            </div>`
         : '';
 
