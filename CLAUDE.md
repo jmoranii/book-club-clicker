@@ -256,8 +256,13 @@ Each book has hidden Discussion Potential:
   - Achievement flags (badBookSurvived, greenlightUnlocked) tracked and shown in victory screen
 
 - [ ] **Phase 13: Polish & Deploy**
+  - Remove stage indicator at top (e.g., "[Stage 1: The Reading Years]") — feels like a spoiler
+  - Only show the next recruitable member (hide future ones until they're one away)
+  - Fix Hamilton (Book 14) — we watched the musical, not read a book
+  - Change Dune flavor text to be a drawn-out "Duuuuuuune" style
+  - In Stage 1, show "X/25 books" instead of "X/168 books" — reveal 168 total only in Stage 2
   - Remove dev tools (reset button, console logging)
-  - Balance pass (DP costs, thresholds, engagement scaling)
+  - Balance pass (DP costs, thresholds, engagement scaling) — consider reducing Tiffany's PPS, things accelerate too quickly after recruiting her
   - Mobile responsiveness check
   - Performance optimization
   - Deploy to GitHub Pages

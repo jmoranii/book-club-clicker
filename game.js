@@ -541,7 +541,6 @@ const elements = {
     membersContainer: null,
     upgradesContainer: null,
     // Stage 2 elements
-    stageIndicator: null,
     phaseIndicator: null,
     discussionPointsDisplay: null,
     discussionProgressBar: null,
@@ -571,7 +570,6 @@ function initElements() {
     elements.membersContainer = document.getElementById('members-container');
     elements.upgradesContainer = document.getElementById('upgrades-container');
     // Stage 2 elements
-    elements.stageIndicator = document.getElementById('stage-indicator');
     elements.phaseIndicator = document.getElementById('phase-indicator');
     elements.discussionPointsDisplay = document.getElementById('discussion-points');
     elements.discussionProgressBar = document.getElementById('discussion-progress');
@@ -2537,17 +2535,6 @@ function updateDisplay() {
     const currentBook = getCurrentBook();
     const inStage2 = isStage2();
     const inDiscussion = isDiscussionPhase();
-
-    // Update stage indicator
-    if (elements.stageIndicator) {
-        if (inStage2) {
-            elements.stageIndicator.textContent = '[Stage 2: The Discussion Era]';
-            elements.stageIndicator.classList.add('stage2');
-        } else {
-            elements.stageIndicator.textContent = '[Stage 1: The Reading Years]';
-            elements.stageIndicator.classList.remove('stage2');
-        }
-    }
 
     // Update phase indicator (Stage 2 only)
     if (elements.phaseIndicator) {
