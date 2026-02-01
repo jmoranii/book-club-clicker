@@ -24,6 +24,7 @@
     --burgundy-dark: #4a1f24;
     --gold: #c9a227;
     --gold-light: #e8d48b;
+    --gold-dark: #9a7a1f;
 
     /* UI colors */
     --border-soft: #d4c8b8;
@@ -1968,4 +1969,147 @@ section h2 {
     .year-books {
         font-size: 0.6rem;
     }
+}
+
+/* ==================== FAREWELL SEQUENCE (Finale) ==================== */
+
+/* Farewell mode member rows - allow wrapping for message */
+.member-row.farewell-mode {
+    flex-wrap: wrap;
+    border: 2px solid var(--gold);
+    background: linear-gradient(135deg, rgba(201, 162, 39, 0.05) 0%, rgba(45, 74, 62, 0.05) 100%);
+}
+
+/* Farewell button base styles */
+button.farewell-btn {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding: 6px 14px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.85em;
+    font-weight: 600;
+    background: linear-gradient(to bottom, #c9a227, #b8922a);
+    color: #5c2e0a;
+    border: 2px solid #9a7a1f;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: auto;
+    margin-right: 10px;
+    box-shadow: 0 2px 0 #9a7a1f;
+}
+
+button.farewell-btn:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #d4ad32, #c9a227);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 0 #9a7a1f;
+}
+
+button.farewell-btn:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 #9a7a1f;
+}
+
+button.farewell-btn.done {
+    background: linear-gradient(to bottom, #2d4a3e, #1a2e25);
+    border-color: #1a2e25;
+    color: #fff;
+    cursor: default;
+    box-shadow: 0 2px 0 #1a2e25;
+}
+
+button.farewell-btn:disabled {
+    cursor: default;
+}
+
+/* "Everyone Else" giant banner button */
+.farewell-everyone-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    margin-top: 8px;
+    background: linear-gradient(135deg, rgba(201, 162, 39, 0.1) 0%, rgba(45, 74, 62, 0.15) 100%);
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+}
+
+.farewell-everyone-banner .banner-label {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 1em;
+    font-style: italic;
+    color: var(--text-muted);
+}
+
+button.farewell-btn.everyone-btn {
+    width: 100%;
+    padding: 18px 24px;
+    font-size: 1.1em;
+    font-weight: 700;
+    border-width: 3px;
+    border-radius: 10px;
+    box-shadow: 0 4px 0 #9a7a1f;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+button.farewell-btn.everyone-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #9a7a1f;
+}
+
+button.farewell-btn.everyone-btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #9a7a1f;
+}
+
+button.farewell-btn.everyone-btn.done {
+    box-shadow: 0 4px 0 #1a2e25;
+}
+
+.farewell-everyone-banner .farewell-message {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-style: italic;
+    font-size: 1.1em;
+    color: var(--text-muted);
+    text-align: center;
+    animation: fadeInMessage 0.5s ease;
+}
+
+/* Farewell message - spans full width below the row */
+.member-row.farewell-mode .farewell-message {
+    width: 100%;
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-style: italic;
+    font-size: 0.95em;
+    color: var(--text-muted);
+    padding: 8px 12px 4px 40px;
+    margin-top: 4px;
+    border-left: 3px solid var(--gold-light);
+    margin-left: 30px;
+    animation: fadeInMessage 0.5s ease;
+}
+
+@keyframes fadeInMessage {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.awaiting-farewell {
+    color: var(--gold) !important;
+    font-style: italic;
+}
+
+.read-button.awaiting-farewell {
+    background: var(--burgundy);
+    border-color: var(--gold);
+    color: var(--gold-light);
 }

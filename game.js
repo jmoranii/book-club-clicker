@@ -261,8 +261,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 50,
-            currentPPS: 50
+            basePPS: 15,
+            currentPPS: 15
         },
         winslow: {
             name: 'Winslow',
@@ -271,8 +271,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 100,
-            currentPPS: 100
+            basePPS: 20,
+            currentPPS: 20
         },
         kyle: {
             name: 'Kyle',
@@ -281,8 +281,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 150,
-            currentPPS: 150,
+            basePPS: 25,
+            currentPPS: 25,
             triggersStage2: true // Special flag
         },
         // Stage 2 Members (cost DP to recruit, boost Group Chat and engagement)
@@ -293,8 +293,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 0,
-            currentPPS: 0,
+            basePPS: 25,
+            currentPPS: 25,
             isStage2Member: true
         },
         andrew: {
@@ -304,8 +304,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 0,
-            currentPPS: 0,
+            basePPS: 25,
+            currentPPS: 25,
             isStage2Member: true
         },
         daniel: {
@@ -315,8 +315,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 0,
-            currentPPS: 0,
+            basePPS: 25,
+            currentPPS: 25,
             isStage2Member: true
         },
         conner: {
@@ -326,8 +326,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 0,
-            currentPPS: 0,
+            basePPS: 25,
+            currentPPS: 25,
             isStage2Member: true
         },
         megan: {
@@ -337,8 +337,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 0,
-            currentPPS: 0,
+            basePPS: 25,
+            currentPPS: 25,
             isStage2Member: true
         },
         cora: {
@@ -348,8 +348,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 0,
-            currentPPS: 0,
+            basePPS: 25,
+            currentPPS: 25,
             isStage2Member: true
         },
         andy: {
@@ -359,8 +359,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 0,
-            currentPPS: 0,
+            basePPS: 25,
+            currentPPS: 25,
             isStage2Member: true
         },
         ben: {
@@ -370,8 +370,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 0,
-            currentPPS: 0,
+            basePPS: 25,
+            currentPPS: 25,
             isStage2Member: true
         },
         paul: {
@@ -381,8 +381,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 0,
-            currentPPS: 0,
+            basePPS: 25,
+            currentPPS: 25,
             isStage2Member: true
         },
         patryk: {
@@ -392,8 +392,8 @@ const gameState = {
             available: false,
             unlocked: false,
             level: 0,
-            basePPS: 0,
-            currentPPS: 0,
+            basePPS: 25,
+            currentPPS: 25,
             isStage2Member: true
         }
     },
@@ -425,6 +425,16 @@ const gameState = {
     badBookSurvived: false,
     gameComplete: false,
     victoryStats: null,
+
+    // Finale farewell state
+    awaitingFarewell: false,
+    farewellsCompleted: {
+        james: false,
+        sydney: false,
+        tiffany: false,
+        winslow: false,
+        everyone: false
+    },
 
     // Events state (Phase 10)
     events: {
@@ -656,6 +666,17 @@ function transitionToDiscussionPhase() {
 // Check if we're waiting for Kyle to be recruited (blocks progression after Book 25)
 function isWaitingForKyle() {
     return gameState.members.kyle.available && !gameState.members.kyle.unlocked && gameState.stage === 1;
+}
+
+// Check if awaiting farewell sequence (finale)
+function isAwaitingFarewell() {
+    return gameState.awaitingFarewell === true;
+}
+
+// Check if all farewells have been completed
+function allFarewellsComplete() {
+    const f = gameState.farewellsCompleted;
+    return f.james && f.sydney && f.tiffany && f.winslow && f.everyone;
 }
 
 // Determine discussion quality based on performance
@@ -953,6 +974,12 @@ function recruitMember(memberKey) {
 function renderMembers() {
     if (!elements.membersContainer) return;
 
+    // Special farewell mode during finale
+    if (isAwaitingFarewell()) {
+        renderFarewellButtons();
+        return;
+    }
+
     const memberOrder = ['james', 'sydney', 'tiffany', 'winslow', 'kyle', 'jane', 'andrew', 'daniel', 'conner', 'megan', 'cora', 'andy', 'ben', 'paul', 'patryk'];
     let html = '';
 
@@ -1002,7 +1029,7 @@ function renderMembers() {
                 avatar = `<img class="member-avatar" src="assets/${member.name}.png" alt="${member.name}">`;
                 status = `<span class="member-pps">${formatNumber(member.currentPPS)} p/s</span>`;
             } else {
-                status = `<span class="member-pps stage2-member-status">Active</span>`;
+                status = `<span class="member-pps stage2-member-status">1 DP/sec • ${formatNumber(member.currentPPS)} p/s</span>`;
             }
         } else if (member.available) {
             // Available to recruit
@@ -1038,6 +1065,74 @@ function renderMembers() {
     }
 
     elements.membersContainer.innerHTML = html;
+}
+
+// Render farewell buttons during finale sequence
+function renderFarewellButtons() {
+    const farewellMessages = {
+        james: "We did it. Every single book.",
+        sydney: "What a beautiful journey.",
+        tiffany: "Best recommendations I ever made.",
+        winslow: "Here's to 10 more years!",
+        everyone: "Thanks for reading with us!"
+    };
+
+    // Core members to show with individual farewell buttons
+    const coreMembers = ['james', 'sydney', 'tiffany', 'winslow'];
+
+    let html = '';
+
+    // Render core members with farewell buttons
+    for (const key of coreMembers) {
+        const member = gameState.members[key];
+        const done = gameState.farewellsCompleted[key];
+        const message = farewellMessages[key];
+
+        const btnClass = done ? 'farewell-btn done' : 'farewell-btn';
+        const btnText = done ? '✓' : 'Say Goodbye';
+
+        html += `
+            <div class="member-row recruited farewell-mode">
+                <span class="member-checkbox">☑</span>
+                <img class="member-avatar" src="assets/${member.name}.png" alt="${member.name}">
+                <span class="member-name">${member.name}</span>
+                <button class="${btnClass}" data-farewell="${key}" ${done ? 'disabled' : ''}>${btnText}</button>
+                <span class="member-pps">${formatNumber(member.currentPPS)} p/s</span>
+                ${done ? `<div class="farewell-message">"${message}"</div>` : ''}
+            </div>
+        `;
+    }
+
+    // Render "Everyone Else" as a big banner for Kyle + Stage 2 members
+    const everyoneDone = gameState.farewellsCompleted.everyone;
+    const everyoneBtnClass = everyoneDone ? 'farewell-btn everyone-btn done' : 'farewell-btn everyone-btn';
+    const everyoneBtnText = everyoneDone ? '✓ Goodbye, Everyone' : 'Say Goodbye to Everyone Else';
+
+    html += `
+        <div class="farewell-everyone-banner">
+            <div class="banner-label">Kyle, Jane, Andrew, Daniel, Conner, Megan, Cora, Andy, Ben, Paul, Patryk</div>
+            <button class="${everyoneBtnClass}" data-farewell="everyone" ${everyoneDone ? 'disabled' : ''}>${everyoneBtnText}</button>
+            ${everyoneDone ? `<div class="farewell-message">"${farewellMessages.everyone}"</div>` : ''}
+        </div>
+    `;
+
+    elements.membersContainer.innerHTML = html;
+}
+
+// Handle farewell button click during finale
+function handleFarewellClick(key) {
+    gameState.farewellsCompleted[key] = true;
+    renderMembers(); // Re-render to show message and disable button
+    saveGame();
+
+    // Check if all farewells complete
+    if (allFarewellsComplete()) {
+        // Brief delay before showing victory screen
+        setTimeout(() => {
+            gameState.awaitingFarewell = false;
+            showVictoryScreen();
+        }, 1500);
+    }
 }
 
 // Calculate current cost for an upgrade
@@ -2423,8 +2518,9 @@ function handleSpecialBook(book) {
             break;
 
         case 'finale':
-            // Phase 12: Book 168 - Victory screen
+            // Phase 12: Book 168 - Enter farewell state
             gameState.gameComplete = true;
+            gameState.awaitingFarewell = true;
             gameState.victoryStats = {
                 totalBooks: gameState.booksCompleted.length,
                 totalWords: gameState.totalWords,
@@ -2433,8 +2529,10 @@ function handleSpecialBook(book) {
                 badBookSurvived: gameState.badBookSurvived,
                 greenlightUnlocked: gameState.greenlightUnlocked
             };
-            setTimeout(() => showVictoryScreen(), 1000);
+            // Don't show victory screen yet - wait for farewells
             saveGame();
+            renderMembers(); // Re-render to show farewell buttons
+            updateDisplay();
             break;
     }
 }
@@ -2443,6 +2541,11 @@ function handleSpecialBook(book) {
 function handleReadClick() {
     // Block clicks when waiting for Kyle to be recruited
     if (isWaitingForKyle()) {
+        return;
+    }
+
+    // Block clicks during farewell sequence
+    if (isAwaitingFarewell()) {
         return;
     }
 
@@ -2613,12 +2716,18 @@ function updateDisplay() {
     }
 
     // Update book title
-    if (isWaitingForKyle()) {
+    if (isAwaitingFarewell()) {
+        elements.bookTitle.textContent = "168 books. 10 years. One last thing to say...";
+        elements.bookTitle.classList.add('awaiting-farewell');
+        elements.bookTitle.classList.remove('waiting-for-kyle');
+    } else if (isWaitingForKyle()) {
         elements.bookTitle.textContent = "You've read and you've read, now here's the twist— a book club needs talk to truly exist!";
         elements.bookTitle.classList.add('waiting-for-kyle');
+        elements.bookTitle.classList.remove('awaiting-farewell');
     } else {
         elements.bookTitle.textContent = currentBook.title;
         elements.bookTitle.classList.remove('waiting-for-kyle');
+        elements.bookTitle.classList.remove('awaiting-farewell');
     }
 
     // Update stats
@@ -2642,7 +2751,15 @@ function updateDisplay() {
     }
 
     // Update progress bars based on phase
-    if (inDiscussion) {
+    if (isAwaitingFarewell()) {
+        // Hide all progress bars during farewell
+        if (elements.readingProgressContainer) {
+            elements.readingProgressContainer.style.display = 'none';
+        }
+        if (elements.discussionProgressContainer) {
+            elements.discussionProgressContainer.style.display = 'none';
+        }
+    } else if (inDiscussion) {
         // Show discussion progress, hide reading progress
         if (elements.readingProgressContainer) {
             elements.readingProgressContainer.style.display = 'none';
@@ -2657,8 +2774,8 @@ function updateDisplay() {
     } else {
         // Show reading progress, hide discussion progress
         if (elements.readingProgressContainer) {
-            // Hide progress bar when waiting for Kyle
-            if (isWaitingForKyle()) {
+            // Hide progress bar when waiting for Kyle or during farewell
+            if (isWaitingForKyle() || isAwaitingFarewell()) {
                 elements.readingProgressContainer.style.display = 'none';
             } else {
                 elements.readingProgressContainer.style.display = 'block';
@@ -2673,16 +2790,24 @@ function updateDisplay() {
         }
     }
 
-    // Update read button when waiting for Kyle
+    // Update read button when waiting for Kyle or farewell
     if (elements.readButton) {
-        if (isWaitingForKyle()) {
+        if (isAwaitingFarewell()) {
+            elements.readButton.disabled = true;
+            elements.readButton.textContent = 'SAY GOODBYE';
+            elements.readButton.classList.add('awaiting-farewell');
+            elements.readButton.classList.remove('waiting-for-kyle');
+            elements.readButton.classList.remove('discuss-mode');
+        } else if (isWaitingForKyle()) {
             elements.readButton.disabled = true;
             elements.readButton.textContent = 'RECRUIT KYLE';
             elements.readButton.classList.add('waiting-for-kyle');
+            elements.readButton.classList.remove('awaiting-farewell');
             elements.readButton.classList.remove('discuss-mode');
         } else {
             elements.readButton.disabled = false;
             elements.readButton.classList.remove('waiting-for-kyle');
+            elements.readButton.classList.remove('awaiting-farewell');
             // Restore proper button text based on phase
             if (inDiscussion) {
                 elements.readButton.textContent = 'DISCUSS';
@@ -2756,6 +2881,8 @@ function saveGame() {
                 badBookSurvived: gameState.badBookSurvived,
                 gameComplete: gameState.gameComplete,
                 victoryStats: gameState.victoryStats,
+                awaitingFarewell: gameState.awaitingFarewell,
+                farewellsCompleted: gameState.farewellsCompleted,
                 globalMultiplier: gameState.globalMultiplier,
                 gameStartTime: gameState.gameStartTime,
                 totalPlayTime: gameState.totalPlayTime
@@ -2854,6 +2981,14 @@ function loadGame() {
         gameState.badBookSurvived = saved.badBookSurvived || false;
         gameState.gameComplete = saved.gameComplete || false;
         gameState.victoryStats = saved.victoryStats || null;
+        gameState.awaitingFarewell = saved.awaitingFarewell || false;
+        gameState.farewellsCompleted = saved.farewellsCompleted || {
+            james: false,
+            sydney: false,
+            tiffany: false,
+            winslow: false,
+            everyone: false
+        };
         gameState.globalMultiplier = saved.globalMultiplier || 1.0;
         gameState.gameStartTime = saved.gameStartTime || Date.now();
         gameState.totalPlayTime = saved.totalPlayTime || 0;
@@ -2982,6 +3117,11 @@ function gameLoop() {
         return;
     }
 
+    // Block progression during farewell sequence
+    if (isAwaitingFarewell()) {
+        return;
+    }
+
     // Stage 1 or Stage 2 Reading Phase: Add passive pages from members and upgrades
     const pps = calculatePagesPerSecond();
     if (pps > 0) {
@@ -3025,6 +3165,15 @@ async function init() {
 
     // Set up event delegation for members container (click handlers attached once)
     elements.membersContainer.addEventListener('click', (e) => {
+        // Handle farewell buttons during finale
+        const farewellBtn = e.target.closest('.farewell-btn');
+        if (farewellBtn && !farewellBtn.disabled) {
+            const key = farewellBtn.dataset.farewell;
+            handleFarewellClick(key);
+            return;
+        }
+
+        // Handle recruit buttons
         const btn = e.target.closest('.recruit-btn');
         if (btn && !btn.classList.contains('disabled')) {
             const memberKey = btn.dataset.member;
@@ -3169,7 +3318,7 @@ window.triggerEvent = function(eventId) {
 
 // Skip to discussion phase
 window.goToDiscussion = function() {
-    if (gameState.currentStage !== 2) {
+    if (gameState.stage !== 2) {
         console.error('Must be in Stage 2. Use skipToBook(26) first.');
         return;
     }
@@ -3177,12 +3326,32 @@ window.goToDiscussion = function() {
     // Complete reading phase instantly
     const book = getCurrentBook();
     if (book) {
-        gameState.currentPages = book.pages;
-        gameState.isDiscussionPhase = true;
+        gameState.currentBookPages = book.pages_required;
+        gameState.bookPhase = 'discussion';
         gameState.currentDiscussionProgress = 0;
         updateDisplay();
         console.log('Now in discussion phase for:', book.title);
     }
+};
+
+// Complete current book instantly (dev tool)
+window.finishBook = function() {
+    if (gameState.stage === 2) {
+        // Stage 2: complete discussion
+        const required = getDiscussionRequired();
+        gameState.currentDiscussionProgress = required;
+        completeDiscussion();
+        console.log('Book completed!');
+    } else {
+        // Stage 1: complete reading
+        const book = getCurrentBook();
+        if (book) {
+            gameState.currentBookPages = book.pages_required;
+            completeBook(); // Calls internal completeBook function
+            console.log('Book completed!');
+        }
+    }
+    updateDisplay();
 };
 
 // Skip to a specific book number
@@ -3237,6 +3406,20 @@ window.clearEventEffects = function() {
     gameState.events.inPersonMeetupActive = false;
     updateDisplay();
     console.log('Event effects cleared');
+};
+
+// Unlock all members (dev tool)
+window.unlockAllMembers = function() {
+    for (const key in gameState.members) {
+        const member = gameState.members[key];
+        member.available = true;
+        member.unlocked = true;
+        member.level = 1;
+    }
+    renderMembers();
+    updateDisplay();
+    saveGame();
+    console.log('All members unlocked!');
 };
 
 // Start when DOM is ready

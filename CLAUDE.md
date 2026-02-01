@@ -46,10 +46,11 @@ Click → Words → Pages → Complete Book → Unlock Members → Members Gener
 ### Member Unlock Order (Stage 1)
 | Member | Unlocks | Base PPS | Specialty |
 |--------|---------|----------|-----------|
-| James | Book 5 | 0.3 p/s | 2x boost to all other members |
-| Sydney | Book 10 | 0.5 p/s | 2x on Knowledge books |
-| Tiffany | Book 15 | 0.3 p/s | 2x on Fiction/Thriller |
-| Winslow | Book 20 | 0.4 p/s | 1.5x on ALL books |
+| James | Book 5 | 1 p/s | 2x boost to all other members |
+| Sydney | Book 10 | 10 p/s | 2x on Knowledge books |
+| Tiffany | Book 15 | 15 p/s | 2x on Fiction/Thriller |
+| Winslow | Book 20 | 20 p/s | 1.5x on ALL books |
+| Kyle | Book 25 | 25 p/s | Recruiting triggers Stage 2 |
 
 ### Stage 1 Upgrades
 - Speed Reading: +10 words per click (cost scales 1.5x)
@@ -99,6 +100,7 @@ All moves have a **10-second cooldown** after use.
 ### Stage 2 Recruitable Members
 Additional members unlock throughout Stage 2. They cost DP to recruit and provide:
 - **+1 DP/second** passive generation (works with or without Group Chat)
+- **+25 pages/second** passive reading speed
 - **+5% engagement bonus** when recruited
 
 | Member | Unlocks | Cost (DP) |
@@ -265,14 +267,18 @@ Each book has hidden Discussion Potential:
   - [x] Rename Macy → Cora, Rachael → Patryk
   - [x] Deploy to GitHub Pages
   - [ ] Remove dev tools (reset button, console logging, debug functions)
-  - [ ] Balance pass (DP costs, thresholds, engagement scaling) — consider reducing Tiffany's PPS
+  - [x] Balance pass: Member PPS rebalanced (James 1, Sydney 10, Tiffany 15, Winslow 20, Kyle 25, Stage 2 members 25 each)
+  - [x] Stage 2 member status now shows "1 DP/sec • 25 p/s" instead of "Active"
   - [ ] Mobile responsiveness check
   - [ ] Performance optimization
 
 - [ ] **Phase 14: End-Game & Art Polish**
   - [x] Fix repeat authors stat — Brandon Sanderson added (2 books)
-  - [ ] Fix playtime stat — currently always shows zero
-  - [ ] Improve finale flow — make end-game feel less abrupt, add a "moment" before stats appear
+  - [x] Fix playtime stat — now tracks time in game loop via deltaTime
+  - [x] Add real McConaughey quotes from Greenlights (16 curated quotes for GREEN LIGHT events)
+  - [x] Update GREEN LIGHT event titles to "GREEN LIGHT!!" (added exclamation marks)
+  - [x] Update victory screen quote to "Just keep readin'." (adapted from "just keep livin'")
+  - [x] Improve finale flow — interactive farewell sequence with member goodbye buttons before victory screen
   - [ ] Add pixel art avatars for Stage 2 members (Jane, Andrew, Daniel, Conner, Megan, Cora, Andy, Ben, Paul, Patryk)
 
 ---
