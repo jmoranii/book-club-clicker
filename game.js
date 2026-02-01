@@ -1070,11 +1070,11 @@ function renderMembers() {
 // Render farewell buttons during finale sequence
 function renderFarewellButtons() {
     const farewellMessages = {
-        james: "We did it. Every single book.",
-        sydney: "What a beautiful journey.",
-        tiffany: "Best recommendations I ever made.",
-        winslow: "Here's to 10 more years!",
-        everyone: "Thanks for reading with us!"
+        james: "Same time next decade?",
+        sydney: "Ross Gay would be proud of us.",
+        tiffany: "Hot take: this was the best book club ever.",
+        winslow: "This reminds me of... everything good.",
+        everyone: "See you in the group chat."
     };
 
     // Core members to show with individual farewell buttons
@@ -1089,7 +1089,7 @@ function renderFarewellButtons() {
         const message = farewellMessages[key];
 
         const btnClass = done ? 'farewell-btn done' : 'farewell-btn';
-        const btnText = done ? '✓' : 'Say Goodbye';
+        const btnText = done ? '💚' : `Thanks, ${member.name}`;
 
         html += `
             <div class="member-row recruited farewell-mode">
@@ -1106,11 +1106,11 @@ function renderFarewellButtons() {
     // Render "Everyone Else" as a big banner for Kyle + Stage 2 members
     const everyoneDone = gameState.farewellsCompleted.everyone;
     const everyoneBtnClass = everyoneDone ? 'farewell-btn everyone-btn done' : 'farewell-btn everyone-btn';
-    const everyoneBtnText = everyoneDone ? '✓ Goodbye, Everyone' : 'Say Goodbye to Everyone Else';
+    const everyoneBtnText = everyoneDone ? '💚 Love you all' : 'Thanks, All';
 
     html += `
         <div class="farewell-everyone-banner">
-            <div class="banner-label">Kyle, Jane, Andrew, Daniel, Conner, Megan, Cora, Andy, Ben, Paul, Patryk</div>
+            <div class="banner-label">The Whole Gang</div>
             <button class="${everyoneBtnClass}" data-farewell="everyone" ${everyoneDone ? 'disabled' : ''}>${everyoneBtnText}</button>
             ${everyoneDone ? `<div class="farewell-message">"${farewellMessages.everyone}"</div>` : ''}
         </div>
@@ -1127,11 +1127,11 @@ function handleFarewellClick(key) {
 
     // Check if all farewells complete
     if (allFarewellsComplete()) {
-        // Brief delay before showing victory screen
+        // Longer delay before showing victory screen (9 seconds)
         setTimeout(() => {
             gameState.awaitingFarewell = false;
             showVictoryScreen();
-        }, 1500);
+        }, 9000);
     }
 }
 
@@ -2717,7 +2717,7 @@ function updateDisplay() {
 
     // Update book title
     if (isAwaitingFarewell()) {
-        elements.bookTitle.textContent = "168 books. 10 years. One last thing to say...";
+        elements.bookTitle.textContent = "We've read and discussed to the end—\nNow say farewell to each friend.";
         elements.bookTitle.classList.add('awaiting-farewell');
         elements.bookTitle.classList.remove('waiting-for-kyle');
     } else if (isWaitingForKyle()) {
@@ -2794,7 +2794,7 @@ function updateDisplay() {
     if (elements.readButton) {
         if (isAwaitingFarewell()) {
             elements.readButton.disabled = true;
-            elements.readButton.textContent = 'SAY GOODBYE';
+            elements.readButton.textContent = 'ONE LAST THING...';
             elements.readButton.classList.add('awaiting-farewell');
             elements.readButton.classList.remove('waiting-for-kyle');
             elements.readButton.classList.remove('discuss-mode');
