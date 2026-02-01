@@ -108,11 +108,11 @@ Additional members unlock throughout Stage 2. They cost DP to recruit and provid
 | Daniel | Book 50 | 200 |
 | Conner | Book 60 | 250 |
 | Megan | Book 70 | 300 |
-| Macy | Book 90 | 400 |
+| Cora | Book 90 | 400 |
 | Andy | Book 110 | 500 |
 | Ben | Book 130 | 600 |
 | Paul | Book 150 | 750 |
-| Rachael | Book 160 | 1000 |
+| Patryk | Book 160 | 1000 |
 
 ### Engagement System
 Engagement is a persistent multiplier between books:
@@ -177,7 +177,7 @@ Each book has hidden Discussion Potential:
 
 ### Stage 1
 - **Book 7: Thinking, Fast and Slow** — "SO GOOD YOU READ IT TWICE!" (bonus pages)
-- **Book 14: Hamilton** — "BOOK CLUB GOES VIRAL!" (engagement boost)
+- **Book 14: Hamilton (The Musical)** — "We watched it, not read it. BOOK CLUB GOES VIRAL!" (engagement boost)
 - **Book 25: Blink** — Unlocks Career Expert Rule. Transition to Stage 2.
 
 ### Stage 2
@@ -256,23 +256,33 @@ Each book has hidden Discussion Potential:
   - Achievement flags (badBookSurvived, greenlightUnlocked) tracked and shown in victory screen
 
 - [ ] **Phase 13: Polish & Deploy**
-  - Remove stage indicator at top (e.g., "[Stage 1: The Reading Years]") — feels like a spoiler
-  - Only show the next recruitable member (hide future ones until they're one away)
-  - Fix Hamilton (Book 14) — we watched the musical, not read a book
-  - Change Dune flavor text to be a drawn-out "Duuuuuuune" style
-  - In Stage 1, show "X/25 books" instead of "X/168 books" — reveal 168 total only in Stage 2
-  - Remove dev tools (reset button, console logging)
-  - Balance pass (DP costs, thresholds, engagement scaling) — consider reducing Tiffany's PPS, things accelerate too quickly after recruiting her
-  - Mobile responsiveness check
-  - Performance optimization
-  - Deploy to GitHub Pages
+  - [x] Remove stage indicator at top (e.g., "[Stage 1: The Reading Years]") — felt like a spoiler
+  - [x] Only show the next recruitable member (hide future ones until they're one away)
+  - [x] Fix Hamilton (Book 14) — now shows as "Hamilton (The Musical)" by Lin-Manuel Miranda
+  - [x] Change Dune flavor text to "Duuuuuuuuuuuuune."
+  - [x] In Stage 1, show "X/25 books" instead of "X/168 books" — reveals 168 total only in Stage 2
+  - [x] Simplify book title display — removed "Current Book: #X -" prefix (book count shown in stats)
+  - [x] Rename Macy → Cora, Rachael → Patryk
+  - [x] Deploy to GitHub Pages
+  - [ ] Remove dev tools (reset button, console logging, debug functions)
+  - [ ] Balance pass (DP costs, thresholds, engagement scaling) — consider reducing Tiffany's PPS
+  - [ ] Mobile responsiveness check
+  - [ ] Performance optimization
+
+- [ ] **Phase 14: End-Game & Art Polish**
+  - [ ] Fix repeat authors stat — Brandon Sanderson should appear (has multiple books)
+  - [ ] Fix playtime stat — currently always shows zero
+  - [ ] Improve finale flow — make end-game feel less abrupt, add a "moment" before stats appear
+  - [ ] Add pixel art avatars for Stage 2 members (Jane, Andrew, Daniel, Conner, Megan, Cora, Andy, Ben, Paul, Patryk)
 
 ---
 
-## Dev Tools (remove before release)
+## Dev Tools (to be removed)
 
+Currently still in codebase, pending removal:
 - Reset button at bottom of page - wipes localStorage and restarts game
-- Console logging for save/load debugging
+- Console logging (~26 statements) for save/load debugging
+- Debug functions exposed on window: `listEvents()`, `triggerEvent()`, `goToDiscussion()`, `skipToBook()`, `giveDP()`, `eventState()`, `clearEventEffects()`
 
 ---
 

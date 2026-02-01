@@ -2000,6 +2000,7 @@ const REAL_BOOK_CLUB_STATS = {
     repeatAuthors: [
         { name: 'Cal Newport', books: 3, goodreads: 'https://www.goodreads.com/author/show/147891.Cal_Newport' },
         { name: 'R.F. Kuang', books: 3, goodreads: 'https://www.goodreads.com/author/show/16820001.R_F_Kuang' },
+        { name: 'Brandon Sanderson', books: 2, goodreads: 'https://www.goodreads.com/author/show/38550.Brandon_Sanderson' },
         { name: 'Isabel Wilkerson', books: 2, goodreads: 'https://www.goodreads.com/author/show/3567958.Isabel_Wilkerson' },
         { name: 'George Saunders', books: 2, goodreads: 'https://www.goodreads.com/author/show/8885.George_Saunders' },
         { name: 'Erik Larson', books: 2, goodreads: 'https://www.goodreads.com/author/show/5869.Erik_Larson' },
