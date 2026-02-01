@@ -1024,9 +1024,10 @@ function renderMembers() {
             // Recruited
             rowClass += ' recruited';
             checkbox = '☑';
-            // Only show avatars for core members (not Stage 2 members)
+            // Show avatars for all members (both core and Stage 2)
+            avatar = `<img class="member-avatar" src="assets/${member.name}.png" alt="${member.name}">`;
+
             if (!isStage2Member) {
-                avatar = `<img class="member-avatar" src="assets/${member.name}.png" alt="${member.name}">`;
                 status = `<span class="member-pps">${formatNumber(member.currentPPS)} p/s</span>`;
             } else {
                 status = `<span class="member-pps stage2-member-status">1 DP/sec • ${formatNumber(member.currentPPS)} p/s</span>`;

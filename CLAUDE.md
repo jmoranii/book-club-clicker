@@ -279,7 +279,7 @@ Each book has hidden Discussion Potential:
   - [x] Update GREEN LIGHT event titles to "GREEN LIGHT!!" (added exclamation marks)
   - [x] Update victory screen quote to "Just keep readin'." (adapted from "just keep livin'")
   - [x] Improve finale flow — interactive farewell sequence with member goodbye buttons before victory screen
-  - [ ] Add pixel art avatars for Stage 2 members (Jane, Andrew, Daniel, Conner, Megan, Cora, Andy, Ben, Paul, Patryk)
+  - [x] Add pixel art avatars for Stage 2 members (Jane, Andrew, Daniel, Conner, Megan, Cora, Andy, Ben, Paul, Patryk)
 
 ---
 
