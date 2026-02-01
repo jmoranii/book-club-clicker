@@ -2595,7 +2595,7 @@ function updateDisplay() {
         elements.bookTitle.textContent = "You've read and you've read, now here's the twist— a book club needs talk to truly exist!";
         elements.bookTitle.classList.add('waiting-for-kyle');
     } else {
-        elements.bookTitle.textContent = `Current Book: #${currentBook.number} - ${currentBook.title}`;
+        elements.bookTitle.textContent = currentBook.title;
         elements.bookTitle.classList.remove('waiting-for-kyle');
     }
 
