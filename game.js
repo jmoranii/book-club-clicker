@@ -2925,6 +2925,9 @@ function gameLoop() {
     const deltaTime = (now - lastTime) / 1000; // Convert to seconds
     lastTime = now;
 
+    // Track total playtime (in milliseconds)
+    gameState.totalPlayTime += deltaTime * 1000;
+
     // Don't do anything if all books complete
     if (isAllBooksComplete()) {
         return;

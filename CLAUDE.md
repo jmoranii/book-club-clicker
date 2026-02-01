@@ -190,7 +190,7 @@ Each book has hidden Discussion Potential:
 - **Book 168: Fight Right** — FINALE. Ultimate discussion. All members at full power. Victory screen with 10-year stats.
 
 ### Easter Egg Books
-- **George Washington: A Life** — "This one took FOREVER." Extended reading phase, but big payoff.
+- **George Washington: A Life** — "63 DAYS. NINE WEEKS. This one took FOREVER." 10x normal pages (7000 pages required) as an inside joke.
 - Other long books may have similar "marathon read" mechanics.
 
 ---
@@ -257,7 +257,7 @@ Each book has hidden Discussion Potential:
 
 - [ ] **Phase 13: Polish & Deploy**
   - [x] Remove stage indicator at top (e.g., "[Stage 1: The Reading Years]") — felt like a spoiler
-  - [x] Only show the next recruitable member (hide future ones until they're one away)
+  - [x] Only show the next recruitable member (hide locked members until all available members are recruited)
   - [x] Fix Hamilton (Book 14) — now shows as "Hamilton (The Musical)" by Lin-Manuel Miranda
   - [x] Change Dune flavor text to "Duuuuuuuuuuuuune."
   - [x] In Stage 1, show "X/25 books" instead of "X/168 books" — reveals 168 total only in Stage 2
@@ -270,7 +270,7 @@ Each book has hidden Discussion Potential:
   - [ ] Performance optimization
 
 - [ ] **Phase 14: End-Game & Art Polish**
-  - [ ] Fix repeat authors stat — Brandon Sanderson should appear (has multiple books)
+  - [x] Fix repeat authors stat — Brandon Sanderson added (2 books)
   - [ ] Fix playtime stat — currently always shows zero
   - [ ] Improve finale flow — make end-game feel less abrupt, add a "moment" before stats appear
   - [ ] Add pixel art avatars for Stage 2 members (Jane, Andrew, Daniel, Conner, Megan, Cora, Andy, Ben, Paul, Patryk)
