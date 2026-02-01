@@ -257,7 +257,7 @@ Each book has hidden Discussion Potential:
   - Book 168: Fight Right victory screen with 10-year stats
   - Achievement flags (badBookSurvived, greenlightUnlocked) tracked and shown in victory screen
 
-- [ ] **Phase 13: Polish & Deploy**
+- [x] **Phase 13: Polish & Deploy**
   - [x] Remove stage indicator at top (e.g., "[Stage 1: The Reading Years]") — felt like a spoiler
   - [x] Only show the next recruitable member (hide locked members until all available members are recruited)
   - [x] Fix Hamilton (Book 14) — now shows as "Hamilton (The Musical)" by Lin-Manuel Miranda
@@ -266,13 +266,13 @@ Each book has hidden Discussion Potential:
   - [x] Simplify book title display — removed "Current Book: #X -" prefix (book count shown in stats)
   - [x] Rename Macy → Cora, Rachael → Patryk
   - [x] Deploy to GitHub Pages
-  - [ ] Remove dev tools (reset button, console logging, debug functions)
+  - [x] Dev tools decision — kept for players/debugging, reset button renamed from "Reset Game (Dev)" to "Reset Game"
   - [x] Balance pass: Member PPS rebalanced (James 1, Sydney 10, Tiffany 15, Winslow 20, Kyle 25, Stage 2 members 25 each)
   - [x] Stage 2 member status now shows "1 DP/sec • 25 p/s" instead of "Active"
-  - [ ] Mobile responsiveness check
-  - [ ] Performance optimization
+  - [x] Mobile responsiveness check — tested on Android, CSS reviewed, iOS playtester confirmed
+  - [x] Performance optimization — Stage 2 avatars resized from ~20 MB to ~105 KB total
 
-- [ ] **Phase 14: End-Game & Art Polish**
+- [x] **Phase 14: End-Game & Art Polish**
   - [x] Fix repeat authors stat — Brandon Sanderson added (2 books)
   - [x] Fix playtime stat — now tracks time in game loop via deltaTime
   - [x] Add real McConaughey quotes from Greenlights (16 curated quotes for GREEN LIGHT events)
@@ -283,12 +283,11 @@ Each book has hidden Discussion Potential:
 
 ---
 
-## Dev Tools (to be removed)
+## Dev Tools (kept intentionally)
 
-Currently still in codebase, pending removal:
-- Reset button at bottom of page - wipes localStorage and restarts game
-- Console logging (~26 statements) for save/load debugging
-- Debug functions exposed on window: `listEvents()`, `triggerEvent()`, `goToDiscussion()`, `skipToBook()`, `giveDP()`, `eventState()`, `clearEventEffects()`
+Available for players and debugging:
+- Reset button at bottom of page — wipes localStorage and restarts game (confirmation required)
+- Console debug functions: `listEvents()`, `triggerEvent()`, `goToDiscussion()`, `skipToBook()`, `giveDP()`, `eventState()`, `clearEventEffects()`, `unlockAllMembers()`, `finishBook()`
 
 ---
 
