@@ -147,7 +147,7 @@ const DISCUSSION_EVENTS = {
     greenlightMoment: {
         name: 'Green Light Moment',
         type: 'greenlight',
-        messageTitle: 'GREEN LIGHT',
+        messageTitle: 'GREEN LIGHT!!',
         messageText: 'good vibes boost — 1.5x discussion points for 30 seconds',
         effect: 'greenlightBoost',
         effectValue: 1.5,
@@ -159,7 +159,7 @@ const DISCUSSION_EVENTS = {
     justKeepLivin: {
         name: 'Just Keep Livin',
         type: 'greenlight',
-        messageTitle: 'GREEN LIGHT',
+        messageTitle: 'GREEN LIGHT!!',
         messageText: 'just keep livin\' — +20% engagement',
         effect: 'boostEngagement',
         effectValue: 0.20,
@@ -171,7 +171,7 @@ const DISCUSSION_EVENTS = {
     beMoreStoked: {
         name: 'Be More Stoked',
         type: 'greenlight',
-        messageTitle: 'GREEN LIGHT',
+        messageTitle: 'GREEN LIGHT!!',
         messageText: 'be more stoked — +25% instant progress',
         effect: 'instantProgress',
         effectValue: 0.25,
