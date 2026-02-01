@@ -330,8 +330,8 @@ const gameState = {
             currentPPS: 0,
             isStage2Member: true
         },
-        macy: {
-            name: 'Macy',
+        cora: {
+            name: 'Cora',
             unlockBook: 90,
             recruitCost: 400,
             available: false,
@@ -374,8 +374,8 @@ const gameState = {
             currentPPS: 0,
             isStage2Member: true
         },
-        rachael: {
-            name: 'Rachael',
+        patryk: {
+            name: 'Patryk',
             unlockBook: 160,
             recruitCost: 1000,
             available: false,
@@ -674,7 +674,7 @@ function determineDiscussionQuality() {
 
 // Calculate engagement bonus from Stage 2 members (+5% per member)
 function getStage2MemberEngagementBonus() {
-    const stage2MemberKeys = ['jane', 'andrew', 'daniel', 'conner', 'megan', 'macy', 'andy', 'ben', 'paul', 'rachael'];
+    const stage2MemberKeys = ['jane', 'andrew', 'daniel', 'conner', 'megan', 'cora', 'andy', 'ben', 'paul', 'patryk'];
     let bonus = 0;
     for (const key of stage2MemberKeys) {
         if (gameState.members[key]?.unlocked) {
@@ -795,7 +795,7 @@ function calculateDiscussionPointsPerSecond() {
     }
 
     // Stage 2 members each add +1 DP/s (flat bonus, always active during discussions)
-    const stage2MemberKeys = ['jane', 'andrew', 'daniel', 'conner', 'megan', 'macy', 'andy', 'ben', 'paul', 'rachael'];
+    const stage2MemberKeys = ['jane', 'andrew', 'daniel', 'conner', 'megan', 'cora', 'andy', 'ben', 'paul', 'patryk'];
     for (const key of stage2MemberKeys) {
         if (gameState.members[key]?.unlocked && key !== gameState.events.activeEffects.memberDisabled) {
             dpRate += 1;
@@ -940,7 +940,7 @@ function recruitMember(memberKey) {
 function renderMembers() {
     if (!elements.membersContainer) return;
 
-    const memberOrder = ['james', 'sydney', 'tiffany', 'winslow', 'kyle', 'jane', 'andrew', 'daniel', 'conner', 'megan', 'macy', 'andy', 'ben', 'paul', 'rachael'];
+    const memberOrder = ['james', 'sydney', 'tiffany', 'winslow', 'kyle', 'jane', 'andrew', 'daniel', 'conner', 'megan', 'cora', 'andy', 'ben', 'paul', 'patryk'];
     let html = '';
 
     for (const key of memberOrder) {
