@@ -2380,6 +2380,11 @@ function closeVictoryScreen() {
 
 function startOverFromVictory() {
     if (confirm('Start a new game? All progress will be reset.')) {
+        // Set flag to prevent any saves during reset
+        isResetting = true;
+        // Stop all intervals to prevent auto-save race condition
+        clearInterval(gameLoopInterval);
+        clearInterval(autoSaveInterval);
         // Clear all saved data
         localStorage.removeItem(SAVE_KEY);
         // Reload the page to start fresh
