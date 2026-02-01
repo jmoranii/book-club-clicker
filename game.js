@@ -531,6 +531,7 @@ const elements = {
     totalWords: null,
     totalPages: null,
     booksCompleted: null,
+    booksTotal: null,
     wordsPerClick: null,
     pagesPerSecond: null,
     currentPages: null,
@@ -561,6 +562,7 @@ function initElements() {
     elements.totalWords = document.getElementById('total-words');
     elements.totalPages = document.getElementById('total-pages');
     elements.booksCompleted = document.getElementById('books-completed');
+    elements.booksTotal = document.getElementById('books-total');
     elements.clickStats = document.getElementById('click-stats');
     elements.currentPages = document.getElementById('current-pages');
     elements.requiredPages = document.getElementById('required-pages');
@@ -2601,6 +2603,10 @@ function updateDisplay() {
     elements.totalWords.textContent = formatNumber(gameState.totalWords);
     elements.totalPages.textContent = formatNumber(gameState.totalPages);
     elements.booksCompleted.textContent = gameState.booksCompleted.length;
+    // Show /25 in Stage 1, /168 in Stage 2
+    if (elements.booksTotal) {
+        elements.booksTotal.textContent = inStage2 ? '168' : '25';
+    }
 
     // Update click stats
     renderClickStats();
