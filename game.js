@@ -957,6 +957,16 @@ function renderMembers() {
         }
     }
 
+    // Only show the next locked member if all available members have been recruited
+    // (i.e., don't show future members while player is still saving up for current ones)
+    const hasAvailableMembers = memberOrder.some(key => {
+        const m = gameState.members[key];
+        return m.available && !m.unlocked;
+    });
+    if (hasAvailableMembers) {
+        nextLockedMemberKey = null;
+    }
+
     for (const key of memberOrder) {
         const member = gameState.members[key];
 
