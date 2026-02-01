@@ -943,8 +943,25 @@ function renderMembers() {
     const memberOrder = ['james', 'sydney', 'tiffany', 'winslow', 'kyle', 'jane', 'andrew', 'daniel', 'conner', 'megan', 'cora', 'andy', 'ben', 'paul', 'patryk'];
     let html = '';
 
+    // Find the next locked member (lowest unlockBook among locked members)
+    // Only show this one locked member to avoid spoiling future content
+    let nextLockedMemberKey = null;
+    let lowestUnlockBook = Infinity;
+    for (const key of memberOrder) {
+        const m = gameState.members[key];
+        if (!m.available && !m.unlocked && m.unlockBook < lowestUnlockBook) {
+            lowestUnlockBook = m.unlockBook;
+            nextLockedMemberKey = key;
+        }
+    }
+
     for (const key of memberOrder) {
         const member = gameState.members[key];
+
+        // Skip locked members that aren't the next one to unlock
+        if (!member.available && !member.unlocked && key !== nextLockedMemberKey) {
+            continue;
+        }
         let rowClass = 'member-row';
         let checkbox = '☐';
         let status = '';
