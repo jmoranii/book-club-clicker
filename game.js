@@ -2741,6 +2741,9 @@ function updateStatsDisplay() {
         elements.discussionPointsDisplay.textContent = formatNumber(Math.floor(gameState.discussionPoints));
     }
 
+    // Update recruit button states (so they enable as soon as affordable)
+    updateRecruitButtonStates();
+
     // Update progress based on current phase
     if (isDiscussionPhase()) {
         const discussionRequired = getDiscussionRequired();
@@ -2758,6 +2761,29 @@ function updateStatsDisplay() {
         elements.currentPages.textContent = Math.floor(Math.min(gameState.currentBookPages, currentBook.pages_required));
         elements.bookProgress.style.width = progress + '%';
     }
+}
+
+// Lightweight update of recruit button enabled/disabled states
+function updateRecruitButtonStates() {
+    const buttons = document.querySelectorAll('.recruit-btn[data-member]');
+    buttons.forEach(btn => {
+        const memberKey = btn.dataset.member;
+        const member = gameState.members[memberKey];
+        if (!member || member.unlocked) return;
+
+        let canAfford = false;
+        if (member.isStage2Member) {
+            canAfford = gameState.discussionPoints >= member.recruitCost;
+        } else {
+            canAfford = gameState.totalPages >= member.recruitCost;
+        }
+
+        if (canAfford) {
+            btn.classList.remove('disabled');
+        } else {
+            btn.classList.add('disabled');
+        }
+    });
 }
 
 // Full display update - includes re-rendering members and upgrades
