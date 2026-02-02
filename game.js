@@ -143,61 +143,90 @@ const DISCUSSION_EVENTS = {
         baseProbability: 0
     },
 
-    // GREEN LIGHT Events (Phase 12 - unlocked after Book 100)
-    greenlightMoment: {
-        name: 'Green Light Moment',
+    // GREEN LIGHT Event (Phase 12 - unlocked after Book 100)
+    // Single unified event that randomly picks quote + effect
+    greenLight: {
+        name: 'Green Light',
         type: 'greenlight',
-        messageTitle: 'GREEN LIGHT!!',
-        messageText: 'good vibes boost — 1.5x discussion points for 30 seconds',
-        effect: 'greenlightBoost',
-        effectValue: 1.5,
-        baseProbability: 0.08,
+        effect: 'greenLightRandom', // Special handler picks random effect
+        baseProbability: 0.10,
         canRepeat: true,
-        cooldownSeconds: 45,
-        requiresGreenlight: true
-    },
-    justKeepLivin: {
-        name: 'Just Keep Livin',
-        type: 'greenlight',
-        messageTitle: 'GREEN LIGHT!!',
-        messageText: 'just keep livin\' — +20% engagement',
-        effect: 'boostEngagement',
-        effectValue: 0.20,
-        baseProbability: 0.05,
-        canRepeat: true,
-        cooldownSeconds: 60,
-        requiresGreenlight: true
-    },
-    beMoreStoked: {
-        name: 'Be More Stoked',
-        type: 'greenlight',
-        messageTitle: 'GREEN LIGHT!!',
-        messageText: 'be more stoked — +25% instant progress',
-        effect: 'instantProgress',
-        effectValue: 0.25,
-        baseProbability: 0.04,
-        canRepeat: false,
+        cooldownSeconds: 40,
         requiresGreenlight: true
     }
 };
 
-// McConaughey quotes for GREEN LIGHT events (from Greenlights bumper stickers)
+// GREEN LIGHT effect options with weights
+const GREENLIGHT_EFFECTS = [
+    { id: 'dpBoost', weight: 60, description: '1.5x DP for 30 seconds', value: 1.5 },
+    { id: 'engagement', weight: 30, description: '+20% engagement', value: 0.20 },
+    { id: 'jackpot', weight: 10, description: '+25% instant progress', value: 0.25, oneTime: true }
+];
+
+// McConaughey quotes for GREEN LIGHT events (from Greenlights book)
 const MCCONAUGHEY_QUOTES = [
+    // Classic
     "Alright, alright, alright...",
     "Just keep livin'.",
+
+    // Part One: Outlaw Logic
     "Words are momentary. Intent is momentous.",
     "Hope has got a higher return on happiness.",
+    "Creativity needs borders. Individuality needs resistance.",
+
+    // Part Two: Find Your Frequency
+    "The first step that leads to our identity in life is usually 'I know who I'm not'.",
+    "We need finites, borders, gravity, shape and resistance to have order.",
     "Style is knowing who you are, what you want to say, and not giving a damn.",
-    "Want her, don't need her.",
+
+    // Part Three: Dirt Roads and Autobahns
+    "Get them early so you don't have to get them as often. Prevent before the cure.",
+    "Life is a combination. DNA and work. Genetics and willpower.",
+    "I'll take a little common sense with that knowledge.",
+    "We are not here to tolerate our differences, we're here to accept them.",
+    "Cool is a natural law. If it was cool for that time then it is cool for all time.",
     "One in a row. Any success takes one in a row.",
-    "Kiss the fire and walk away whistling.",
-    "Once you know it's black, it's not as dark.",
-    "An honest man's pillow is his peace of mind.",
-    "Truth is like a jalapeño: the closer you get to the root, the hotter it gets.",
+    "The sooner we become less impressed with our accomplishments and more involved, we get better at them.",
+    "Want her, don't need her.",
+    "Taking the road less traveled can make all the difference.",
+
+    // Part Four: The Art of Running Downhill
+    "Most of the time it's not stolen, it's right where you left it.",
+    "When you can, ask yourself if you want to before you do.",
+    "We are guilty by omission. It's not just what we do, it's what we don't do.",
+    "We are all made for every moment we encounter.",
+    "Don't create imaginary constraints.",
+    "Sometimes you have etc., sometimes etc. has you.",
+    "Don't trip yourself while running downhill. Don't invent drama, it will come on its own.",
+    "Just because the seats are empty doesn't mean they are not taken.",
+    "Sometimes we have to leave what we know to find out what we know.",
+    "Common sense is like money and health. Once you have it, you have to work to keep it.",
+    "Adapt to modify. The renaissance man is at home wherever he goes.",
+
+    // Part Five: Turn the Page
     "If you are high enough, the sun is always shining.",
+    "Kiss the fire and walk away whistling.",
+    "Sometimes which choice you make is not as important as making a choice and committing to it.",
     "Educate before you indict.",
+    "Some people look for an excuse to do. Others look for an excuse not to do.",
+    "I am good at what I love. I don't love all that I'm good at.",
+
+    // Part Six: The Arrow Doesn't Seek the Target
+    "The great man is not all to each. He is each to all.",
+    "Life, like architecture, is a verb. If designed well, it works.",
     "It's not a risk unless you can lose the fight.",
-    "Man is never more masculine than after the birth of his first child.",
+
+    // Part Seven: Be Brave, Take the Hill
+    "Once you know it's black, it's not as dark.",
+    "If we all made a sense of humor the default emotion, we'd all get along a lot better.",
+    "Define success for yourself. Your answer may change over time and that's OK.",
+    "Truth is like a jalapeño: the closer you get to the root, the hotter it gets.",
+    "An honest man's pillow is his peace of mind.",
+    "Time and truth. Two constants you can rely on.",
+
+    // Part Eight: Live Your Legacy Now
+    "If you just live together, you live for the present. If you marry, you live for the future.",
+    "There is a difference between art and self-expression.",
     "We don't live longer when we try not to die, we live longer when we are too busy living."
 ];
 
@@ -422,6 +451,7 @@ const gameState = {
     // Special unlocks
     careerExpertRuleUnlocked: false,
     greenlightUnlocked: false,
+    greenlightJackpotUsed: false,
     badBookSurvived: false,
     gameComplete: false,
     victoryStats: null,
@@ -1785,15 +1815,11 @@ function checkForEvents() {
     // Check special events first (guaranteed at specific books)
     checkSpecialEvents();
 
-    // Check GREEN LIGHT events if unlocked (Phase 12)
+    // Check GREEN LIGHT event if unlocked (Phase 12)
     if (gameState.greenlightUnlocked) {
-        const greenlightEvents = ['greenlightMoment', 'justKeepLivin', 'beMoreStoked'];
-        for (const eventId of greenlightEvents) {
-            if (!canEventTrigger(eventId)) continue;
-            if (Math.random() < calculateEventProbability(eventId)) {
-                executeEvent(eventId);
-                return; // Only one event per check
-            }
+        if (canEventTrigger('greenLight') && Math.random() < calculateEventProbability('greenLight')) {
+            executeEvent('greenLight');
+            return; // Only one event per check
         }
     }
 
@@ -1860,8 +1886,8 @@ function executeEvent(eventId) {
         case 'dpMultiplier':
             executeInPersonMeetup(event);
             break;
-        case 'greenlightBoost':
-            executeGreenlightBoost(event);
+        case 'greenLightRandom':
+            executeGreenLight();
             break;
     }
 
@@ -2018,24 +2044,78 @@ function executeInPersonMeetup(event) {
     updateDisplay();
 }
 
-// GREEN LIGHT Boost - temporary 1.5x discussion points multiplier (Phase 12)
-function executeGreenlightBoost(event) {
-    const originalMultiplier = gameState.events.activeEffects.dpMultiplier;
-    gameState.events.activeEffects.dpMultiplier *= event.effectValue;
-
+// GREEN LIGHT - unified event with random quote + random effect (Phase 12)
+function executeGreenLight() {
+    // Pick a random quote
     const quote = MCCONAUGHEY_QUOTES[Math.floor(Math.random() * MCCONAUGHEY_QUOTES.length)];
 
-    showMessage(
-        event.messageTitle,
-        `${quote}<br><em>${event.effectValue}x discussion points for 30 seconds!</em>`,
-        'greenlight'
+    // Pick a weighted random effect
+    // Filter out jackpot if already used
+    let availableEffects = GREENLIGHT_EFFECTS.filter(e =>
+        !e.oneTime || !gameState.greenlightJackpotUsed
     );
 
-    // Revert after 30 seconds
-    setTimeout(() => {
-        gameState.events.activeEffects.dpMultiplier = originalMultiplier;
-        showMessage('Green Light Fading...', 'Back to normal, but stay stoked!', 'normal');
-    }, 30000);
+    // Calculate total weight
+    const totalWeight = availableEffects.reduce((sum, e) => sum + e.weight, 0);
+    let roll = Math.random() * totalWeight;
+
+    let selectedEffect = availableEffects[0];
+    for (const effect of availableEffects) {
+        roll -= effect.weight;
+        if (roll <= 0) {
+            selectedEffect = effect;
+            break;
+        }
+    }
+
+    // Execute the selected effect
+    switch (selectedEffect.id) {
+        case 'dpBoost':
+            // 1.5x DP for 30 seconds
+            const originalMultiplier = gameState.events.activeEffects.dpMultiplier;
+            gameState.events.activeEffects.dpMultiplier *= selectedEffect.value;
+
+            showMessage(
+                `"${quote}"`,
+                `GREEN LIGHT — ${selectedEffect.description}!`,
+                'greenlight'
+            );
+
+            setTimeout(() => {
+                gameState.events.activeEffects.dpMultiplier = originalMultiplier;
+                showMessage('Green Light Fading...', 'Back to normal, but stay stoked!', 'normal');
+            }, 30000);
+            break;
+
+        case 'engagement':
+            // +20% engagement
+            gameState.engagement += selectedEffect.value;
+
+            showMessage(
+                `"${quote}"`,
+                `GREEN LIGHT — ${selectedEffect.description}!`,
+                'greenlight'
+            );
+            break;
+
+        case 'jackpot':
+            // +25% instant progress (one-time only)
+            gameState.greenlightJackpotUsed = true;
+            const progressGain = gameState.discussionRequired * selectedEffect.value;
+            gameState.discussionProgress = Math.min(
+                gameState.discussionRequired,
+                gameState.discussionProgress + progressGain
+            );
+
+            showMessage(
+                `"${quote}"`,
+                `GREEN LIGHT — ${selectedEffect.description}! 🎰 JACKPOT!`,
+                'greenlight'
+            );
+            break;
+    }
+
+    updateDisplay();
 }
 
 // Reset events state for new book
@@ -2884,6 +2964,7 @@ function saveGame() {
                 lastDiscussionQuality: gameState.lastDiscussionQuality,
                 careerExpertRuleUnlocked: gameState.careerExpertRuleUnlocked,
                 greenlightUnlocked: gameState.greenlightUnlocked,
+                greenlightJackpotUsed: gameState.greenlightJackpotUsed,
                 badBookSurvived: gameState.badBookSurvived,
                 gameComplete: gameState.gameComplete,
                 victoryStats: gameState.victoryStats,
@@ -2984,6 +3065,7 @@ function loadGame() {
         gameState.lastDiscussionQuality = saved.lastDiscussionQuality || 'good';
         gameState.careerExpertRuleUnlocked = saved.careerExpertRuleUnlocked || false;
         gameState.greenlightUnlocked = saved.greenlightUnlocked || false;
+        gameState.greenlightJackpotUsed = saved.greenlightJackpotUsed || false;
         gameState.badBookSurvived = saved.badBookSurvived || false;
         gameState.gameComplete = saved.gameComplete || false;
         gameState.victoryStats = saved.victoryStats || null;
