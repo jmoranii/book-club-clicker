@@ -622,6 +622,8 @@ function initElements() {
     elements.messageContainer = document.getElementById('message-container');
     elements.membersContainer = document.getElementById('members-container');
     elements.upgradesContainer = document.getElementById('upgrades-container');
+    elements.membersSection = document.querySelector('.members-section');
+    elements.upgradesSection = document.querySelector('.upgrades-section');
     // Stage 2 elements
     elements.phaseIndicator = document.getElementById('phase-indicator');
     elements.discussionPointsDisplay = document.getElementById('discussion-points');
@@ -2791,6 +2793,16 @@ function updateDisplay() {
     const currentBook = getCurrentBook();
     const inStage2 = isStage2();
     const inDiscussion = isDiscussionPhase();
+
+    // Progressive reveal: show panels after completing early books
+    if (elements.membersSection) {
+        elements.membersSection.style.display =
+            gameState.booksCompleted.length >= 1 ? 'block' : 'none';
+    }
+    if (elements.upgradesSection) {
+        elements.upgradesSection.style.display =
+            gameState.booksCompleted.length >= 2 ? 'block' : 'none';
+    }
 
     // Update phase indicator (Stage 2 only)
     if (elements.phaseIndicator) {
