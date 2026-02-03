@@ -71,9 +71,10 @@ const DISCUSSION_EVENTS = {
         effect: 'costDP',
         effectValue: 50,
         baseProbability: 0.05,
+        reducedProbability: 0.02,
         canRepeat: true,
         cooldownSeconds: 45,
-        preventedBy: 'james'
+        reducedBy: 'james'
     },
     scheduleConflict: {
         name: 'Schedule Conflict',
@@ -1773,11 +1774,6 @@ function canEventTrigger(eventId) {
         }
     }
 
-    // Prevented by member?
-    if (event.preventedBy && gameState.members[event.preventedBy]?.unlocked) {
-        return false;
-    }
-
     return true;
 }
 
@@ -1785,6 +1781,12 @@ function canEventTrigger(eventId) {
 function calculateEventProbability(eventId) {
     const event = DISCUSSION_EVENTS[eventId];
     let prob = event.baseProbability;
+
+    // Member-based probability reduction (e.g., James reduces The Tangent)
+    if (event.reducedProbability && event.reducedBy &&
+        gameState.members[event.reducedBy]?.unlocked) {
+        prob = event.reducedProbability;
+    }
 
     // Better Wifi reduces Technical Difficulties
     if (event.reducedBy === 'betterWifi' &&
@@ -1910,7 +1912,7 @@ function executePauseDiscussion(event) {
     }, event.effectValue * 1000);
 }
 
-// The Tangent - costs discussion points to refocus (James prevents entirely)
+// The Tangent - costs discussion points to refocus (James reduces chance from 5% to 2%)
 function executeTangent(event) {
     gameState.events.activeEffects.tangentRefocusCost = event.effectValue;
 
@@ -2012,12 +2014,18 @@ function executeControversialOpinion(event) {
         messageText += `<br><em>It sparked great debate! +${(gained * 100).toFixed(0)}% engagement!</em>`;
         showMessage(event.messageTitle, messageText, 'event-chaotic-good');
     } else {
-        const oldEngagement = gameState.engagement;
-        gameState.engagement = Math.max(gameState.engagement - changeAmount, 1.0);
-        const lost = oldEngagement - gameState.engagement;
+        // Hot Take Insurance: floor engagement loss at 0%
+        if (gameState.stage2Upgrades.hotTakeInsurance.level > 0) {
+            messageText += `<br><em>It almost killed the vibe, but your insurance saved you!</em>`;
+            showMessage(event.messageTitle, messageText, 'event-chaotic-neutral');
+        } else {
+            const oldEngagement = gameState.engagement;
+            gameState.engagement = Math.max(gameState.engagement - changeAmount, 1.0);
+            const lost = oldEngagement - gameState.engagement;
 
-        messageText += `<br><em>It killed the vibe... -${(lost * 100).toFixed(0)}% engagement.</em>`;
-        showMessage(event.messageTitle, messageText, 'event-chaotic-bad');
+            messageText += `<br><em>It killed the vibe... -${(lost * 100).toFixed(0)}% engagement.</em>`;
+            showMessage(event.messageTitle, messageText, 'event-chaotic-bad');
+        }
     }
 
     updateDisplay();

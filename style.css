@@ -865,6 +865,31 @@ section h2 {
     color: #ef4444;
 }
 
+/* Chaotic Neutral - Purple-tinted (insurance saved you) */
+.message-event-chaotic-neutral {
+    border-color: #9b59b6;
+    background: linear-gradient(to bottom, #f5f0ff, var(--bg-cream));
+    position: relative;
+}
+
+.message-event-chaotic-neutral::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #9b59b6, #b794d4, #9b59b6);
+}
+
+.message-event-chaotic-neutral .message-title {
+    color: #8e44ad;
+}
+
+.message-event-chaotic-neutral .message-text em {
+    color: #9b59b6;
+}
+
 /* Special Events - Gold celebration */
 .message-event-special {
     border-color: var(--gold);
